@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data Files
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+Cleaned_Master_Dataset_2015_2024.csv
+
+
+# Generated Index Files
+liq_*.csv
+*_historical_data.csv
+pca_weights*.csv
+qualified_companies*.csv
+removed_companies*.csv
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS-specific
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Research Papers (optional - uncomment if you want to exclude)
+# Papers/*.pdf
+
+# Keep specific files (use ! to negate)
+!context.md
+!README.md
+!requirements.txt
+!.gitignore
