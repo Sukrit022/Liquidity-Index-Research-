@@ -1,0 +1,7 @@
+Composite Liquidity Index for the Indian Equity Market (Nifty 500)
+
+• Computed 13 illiquidity proxies across 5 dimensions for 496 NSE stocks over 2015–2024 (~1.2M+ daily observations).
+
+• Built market- and stock-level liquidity indices via PCA, APC (regime-based), and equal-weighted methods; validated against crisis periods (COVID-19 Mar 2020) and monotonicity checks.
+
+• Automated end-to-end pipeline in Python (pandas, NumPy, scikit-learn) with a 460-line verification suite, cutting manual processing time by ~90%.
