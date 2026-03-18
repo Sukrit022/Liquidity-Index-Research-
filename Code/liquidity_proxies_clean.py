@@ -825,13 +825,21 @@ for proxy in proxy_cols:
     pct_missing = 100 * n_missing / len(monthly_data)
     print(f"    {proxy:<18} : {n_missing:>6,} ({pct_missing:5.1f}%)")
 
-# Winsorize outliers at 1% and 99% (conservative approach)
-print("\n  Winsorizing outliers (1% and 99% quantiles)...")
+# Winsorize outliers WITHIN each month's cross-section (1%/99%)
+# ---------------------------------------------------------------------------
+# RATIONALE: Global (pooled-time) winsorization clips crisis-month extremes
+# (2008, 2020 COVID) to the 99th percentile of all time, destroying the very
+# covariance spikes that PCA/APC rely on for crisis detection.  Monthly
+# cross-sectional winsorization only trims within-month stock-level outliers
+# while preserving the time-series variation that drives the market index.
+# ---------------------------------------------------------------------------
+print("\n  Winsorizing outliers (1%/99% MONTHLY cross-sectional)...")
 for proxy in proxy_cols:
     if monthly_data[proxy].notna().sum() > 0:
-        lower = monthly_data[proxy].quantile(0.01)
-        upper = monthly_data[proxy].quantile(0.99)
-        monthly_data[proxy] = monthly_data[proxy].clip(lower=lower, upper=upper)
+        monthly_data[proxy] = monthly_data.groupby('YEAR_MONTH')[proxy].transform(
+            lambda x: x.clip(lower=x.quantile(0.01), upper=x.quantile(0.99))
+                      if x.notna().sum() >= 10 else x
+        )
 
 # Final dataset: drop rows with ANY missing proxy
 print(f"\n  Before dropping NaN: {len(monthly_data):,} observations")
@@ -1393,7 +1401,7 @@ print("  [NOTE] Market index will be built from RAW proxies, not z-scores, to av
 # E) STOCK-LEVEL LIQUIDITY SCORES (Cross-Sectional Characteristic)
 # ============================================================================
 
-def build_stock_liquidity_scores(df, core_proxies, proxy_meta, train_frac=0.7):
+def build_stock_liquidity_scores(df, core_proxies, proxy_meta):
     """Build stock-level liquidity scores using cross-sectional z-scores"""
     print("\n[E] Stock-Level Liquidity Scores (Cross-Sectional Characteristic)")
     from sklearn.decomposition import PCA
@@ -1401,19 +1409,13 @@ def build_stock_liquidity_scores(df, core_proxies, proxy_meta, train_frac=0.7):
     z_cols = [f"Z_{p}" for p in core_proxies]
     data_pca = df[['SYMBOL', 'YEAR_MONTH'] + z_cols].dropna(subset=z_cols).copy()
     
-    # Train/test split by time
-    unique_months = sorted(data_pca['YEAR_MONTH'].unique())
-    n_train = int(len(unique_months) * train_frac)
-    train_months = unique_months[:n_train]
+    print(f"  Using ALL data: {data_pca['YEAR_MONTH'].min()} to {data_pca['YEAR_MONTH'].max()} ({data_pca['YEAR_MONTH'].nunique()} months)")
     
-    print(f"  Training: {train_months[0]} to {train_months[-1]} ({n_train} months)")
-    
-    # Fit PCA on training data only
-    train_data = data_pca[data_pca['YEAR_MONTH'].isin(train_months)]
-    X_train = train_data[z_cols].values
+    # Fit PCA on all data
+    X_all = data_pca[z_cols].values
     
     pca = PCA(n_components=1)
-    pca.fit(X_train)
+    pca.fit(X_all)
     
     w_pca_stock = pca.components_[0]
     explained_var_stock = pca.explained_variance_ratio_[0]
@@ -1463,114 +1465,68 @@ def build_stock_liquidity_scores(df, core_proxies, proxy_meta, train_frac=0.7):
 # F) MARKET LIQUIDITY INDEX (Time-Series State, from Raw Proxies)
 # ============================================================================
 
-def build_market_liquidity_index(df, core_proxies, proxy_meta, train_frac=0.7):
-    """Build market-state liquidity index from raw proxy aggregates"""
-    print("\n[F] Market Liquidity Index (Time-Series State from Raw Proxies)")
+def build_market_liquidity_index(df, core_proxies, proxy_meta):
+    """
+    Build market liquidity index using PCA - SIMPLE RAW VERSION
+    Uses COMPLETE observations only (listwise deletion)
+    Uses ALL available data (no train/test split)
+    """
+    print("\n[F] Market Liquidity Index - PCA Method (RAW - Complete Observations Only)")
+    print("  Using ALL data (100% for index construction)")
     from sklearn.decomposition import PCA
     
-    # Use RAW proxies (not cross-sectional z-scores) to avoid degeneracy
+    # PCA: Use only observations where ALL proxies are present (listwise deletion)
     data_market = df[['SYMBOL', 'YEAR_MONTH'] + core_proxies].dropna(subset=core_proxies).copy()
     
-    print(f"  Computing market proxy series from raw proxies...")
+    print(f"  [PCA] Using listwise deletion (keep only complete observations)")
+    print(f"  Observations after dropping rows with ANY missing proxy: {len(data_market):,}")
     
-    # Aggregate to market level: median across stocks each month (robust to outliers)
+    # Aggregate to market level: median across stocks each month
     market_proxies_raw = data_market.groupby('YEAR_MONTH')[core_proxies].median().reset_index()
     
     print(f"  Market proxy series: {len(market_proxies_raw)} months x {len(core_proxies)} proxies")
+    print(f"  Using ALL {len(core_proxies)} core proxies: {', '.join(core_proxies)}")
     
-    # Standardize each market proxy series across TIME
-    # ----------------------------------------------------------------------------
-    # METHODOLOGICAL NOTE: De-trending and Standardization
-    # ----------------------------------------------------------------------------
-    # We apply linear de-trending before standardization for the following reasons:
-    # 
-    # 1. SECULAR TRENDS: Indian equity market liquidity improved structurally 2005-2024
-    #    due to: (a) reduced tick sizes, (b) increased market depth, (c) technology adoption
-    #    
-    # 2. ECONOMIC INTERPRETATION: De-trending isolates CYCLICAL liquidity shocks from
-    #    SECULAR market development. The final index measures "liquidity relative to trend"
-    #    rather than "absolute liquidity". This makes crisis events (2008, 2020) comparable
-    #    despite massive differences in market structure.
-    #    
-    # 3. STATISTICAL JUSTIFICATION: Without de-trending, PCA would be dominated by
-    #    secular trends (AMIHUD declined 5x 2005→2024), not cyclical variation.
-    #    De-trending ensures PCA captures co-movement during stress events.
-    #    
-    # 4. ALTERNATIVE APPROACH: One could use first-differences or log-returns instead,
-    #    but de-trending preserves level interpretation while removing trends.
-    #    
-    # CRISIS DETECTION: 2008-09 and 2020 COVID appear severe because they represent
-    # large DEVIATIONS from improving trend, not because absolute liquidity was worse
-    # than 2005 levels. This is the intended interpretation for cycle analysis.
-    # ----------------------------------------------------------------------------
-    print(f"  De-trending and standardizing market proxy series...")
-    print(f"  Using TRAINING period only for trend estimation (no look-ahead bias)")
+    # Simple standardization: subtract mean, divide by std
+    print(f"\n  Standardizing proxies (no detrending)...")
     market_proxies_std = market_proxies_raw.copy()
-    
-    from scipy import signal
-    
-    # Train/test split by time (do this BEFORE de-trending)
-    unique_months = sorted(market_proxies_raw['YEAR_MONTH'].unique())
-    n_train = int(len(unique_months) * train_frac)
-    train_months = unique_months[:n_train]
-    
-    print(f"  Training: {train_months[0]} to {train_months[-1]} ({n_train} months)")
     
     for proxy in core_proxies:
         values = market_proxies_raw[proxy].values
-        
-        # Estimate trend on TRAINING period only
-        train_mask = market_proxies_raw['YEAR_MONTH'].isin(train_months)
-        train_values = values[train_mask]
-        train_indices = np.arange(len(train_values))
-        
-        # Fit linear trend on training data
-        trend_coef = np.polyfit(train_indices, train_values, deg=1)
-        
-        # Apply trend removal to FULL sample using training-fitted trend
-        full_indices = np.arange(len(values))
-        trend_line = np.polyval(trend_coef, full_indices)
-        detrended = values - trend_line
-        
-        # Standardize using full sample std (after de-trending)
-        std_val = detrended.std()
+        mean_val = values.mean()
+        std_val = values.std()
         if std_val > 0:
-            market_proxies_std[proxy] = detrended / std_val
+            market_proxies_std[proxy] = (values - mean_val) / std_val
         else:
             market_proxies_std[proxy] = 0
+            print(f"    [WARNING] {proxy}: Zero variance")
     
-    # Fit PCA on training period
-    train_market = market_proxies_std[market_proxies_std['YEAR_MONTH'].isin(train_months)]
-    X_train_market = train_market[core_proxies].values
+    # Apply PCA on all data
+    X_all = market_proxies_std[core_proxies].values
     
     pca_market = PCA(n_components=1)
-    pca_market.fit(X_train_market)
+    pca_market.fit(X_all)
     
     w_pca_market = pca_market.components_[0]
     explained_var_market = pca_market.explained_variance_ratio_[0]
     
+    print(f"\n  [PCA WEIGHTS]")
     print(f"  Explained variance: {explained_var_market*100:.2f}%")
-    print(f"  Weights (market state):")
+    print(f"  Weights:")
     for proxy, weight in zip(core_proxies, w_pca_market):
         print(f"    {proxy:<18}: {weight:>8.4f}")
     
-    # Compute market index for all periods
+    # Compute PCA index
     # FLIP SIGN: Convert illiquidity to liquidity (higher = MORE liquid)
-    X_all_market = market_proxies_std[core_proxies].values
-    market_proxies_std['LIQ_MARKET_PCA'] = -(X_all_market @ w_pca_market)
+    market_proxies_std['LIQ_MARKET_PCA'] = -(X_all @ w_pca_market)
     
-    # ALSO compute equal-weighted index for comparison (gives all proxies equal voice)
-    print(f"\n  Computing equal-weighted index for comparison...")
-    # Equal weights: each proxy gets 1/N weight (weights sum to 1.0)
+    # Equal-weighted index
+    print(f"\n  [EQUAL-WEIGHTED INDEX]")
     w_equal = np.ones(len(core_proxies)) / len(core_proxies)
-    market_proxies_std['LIQ_MARKET_EW'] = -(X_all_market @ w_equal)
-    
-    # Choose which to use as primary (equal-weighted captures all dimensions better)
+    market_proxies_std['LIQ_MARKET_EW'] = -(X_all @ w_equal)
     market_proxies_std['LIQ_MARKET'] = market_proxies_std['LIQ_MARKET_EW']
-    print(f"\n  [DECISION] Using equal-weighted index as primary (captures all liquidity dimensions)")
-    print(f"  [RATIONALE] PCA over-weights AMIHUD/spread; equal-weighting captures circuit breakers/zero-trading")
     
-    # Sign alignment with raw AMIHUD market series (ensure negative correlation)
+    # Sign alignment check
     if 'AMIHUD' in core_proxies:
         corr_check_ew = market_proxies_std[['LIQ_MARKET_EW', 'AMIHUD']].corr().iloc[0, 1]
         if corr_check_ew > 0:
@@ -1584,305 +1540,191 @@ def build_market_liquidity_index(df, core_proxies, proxy_meta, train_frac=0.7):
             print(f"  [FIX] Flipping PCA sign (corr with AMIHUD: {corr_check_pca:.3f})")
             w_pca_market = -w_pca_market
             market_proxies_std['LIQ_MARKET_PCA'] = -market_proxies_std['LIQ_MARKET_PCA']
-        
-        print(f"  PCA vs Equal-weighted correlation: {market_proxies_std[['LIQ_MARKET_PCA', 'LIQ_MARKET_EW']].corr().iloc[0, 1]:.3f}")
     
-    # FINAL VALIDATION: Sign convention check
-    print(f"\n  [VALIDATION] Final sign convention check:")
-    if 'AMIHUD' in core_proxies:
-        amihud_median = market_proxies_raw['AMIHUD']
-        liq_market_corr = market_proxies_std['LIQ_MARKET'].corr(amihud_median)
-        print(f"    Correlation(LIQ_MARKET, AMIHUD_median): {liq_market_corr:.3f}")
-        if liq_market_corr < -0.3:
-            print(f"    [OK] Strong negative correlation confirms correct interpretation")
-            print(f"         (Higher LIQ_MARKET = More liquid = Lower AMIHUD)")
-        elif liq_market_corr > 0.3:
-            print(f"    [ERROR] Positive correlation indicates WRONG SIGN!")
-        else:
-            print(f"    [WARNING] Weak correlation - verify index construction")
+    print(f"\n  Interpretation: Higher LIQ_MARKET = MORE liquid market")
     
-    print(f"  Interpretation: Higher LIQ_MARKET = MORE liquid market (better conditions)")
-    
-    # Save both indices - equal-weighted as primary, PCA for comparison
+    # Save outputs
     market_output_ew = market_proxies_std[['YEAR_MONTH', 'LIQ_MARKET_EW']].copy()
     market_output_ew.columns = ['MONTH', 'LIQ_MARKET']
-    market_output_ew.to_csv('liq_market_index_equal_weighted.csv', index=False)  # Primary output (equal-weighted)
+    market_output_ew.to_csv('liq_market_index_equal_weighted.csv', index=False)
     
     market_output_pca = market_proxies_std[['YEAR_MONTH', 'LIQ_MARKET_PCA']].copy()
     market_output_pca.columns = ['MONTH', 'LIQ_MARKET']
-    market_output_pca.to_csv('liq_market_index_pca_variance_weighted.csv', index=False)  # Alternative
+    market_output_pca.to_csv('liq_market_index_pca_variance_weighted.csv', index=False)
     
-    pd.DataFrame({'proxy': core_proxies, 'weight_equal': w_equal, 'weight_pca': w_pca_market}).to_csv('pca_weights_market.csv', index=False)
-    
-    print(f"  Saved: liq_market_index_equal_weighted.csv (equal-weighted, PRIMARY)")
-    print(f"  Saved: liq_market_index_pca_variance_weighted.csv (PCA, for comparison)")
-    
-    return market_proxies_std, w_equal, explained_var_market
-
-stock_pca, pca_weights_stock, pca_expl_var_stock = build_stock_liquidity_scores(monthly_std, core_proxies, PROXY_META)
-market_pca, pca_weights_market, pca_expl_var_market = build_market_liquidity_index(final_data, core_proxies, PROXY_META)
-
-# ============================================================================
-# H) MARKET-STATE APC (Pairwise Covariance for Robustness)
-# ============================================================================
-
-def build_market_state_apc(df, core_proxies, train_frac=0.7):
-    """
-    Build market-state APC using pairwise covariance (missingness-robust)
-    
-    METHODOLOGICAL NOTE: APC vs PCA Differences
-    --------------------------------------------
-    APC (Asymptotic Principal Components) uses pairwise covariance matrix which:
-    1. Handles missing data better than standard PCA
-    2. Weights each proxy pair equally regardless of variance
-    3. Can produce different factor loadings than PCA
-    
-    WHY APC MIGHT DIFFER FROM PCA:
-    - PCA maximizes variance explained → over-weights high-variance proxies (e.g., AMIHUD)
-    - APC uses pairwise covariances → more balanced weighting across proxies
-    - During crises: If high-variance proxies move differently than low-variance ones,
-      PCA and APC can disagree on sign/magnitude
-    
-    SIGN VALIDATION: We apply de-trending (like PCA) and validate that APC falls
-    during known crisis periods (2008-2009). If APC rises during crisis, sign is flipped.
-    """
-    print("\n[H] Market-State APC (Pairwise Covariance for Robustness)")
-    from sklearn.decomposition import PCA
-    
-    # Use RAW proxies aggregated to market level
-    data_apc = df[['SYMBOL', 'YEAR_MONTH'] + core_proxies].dropna(subset=core_proxies).copy()
-    
-    # Market medians per month
-    market_series = data_apc.groupby('YEAR_MONTH')[core_proxies].median().reset_index()
-    print(f"  Market proxy series: {len(market_series)} months x {len(core_proxies)} proxies")
-    
-    # Standardize each proxy across time (use same de-trending as PCA for consistency)
-    from scipy import signal
-    
-    print(f"  De-trending and standardizing market proxy series (matching PCA method)...")
-    print(f"  Using TRAINING period only for trend estimation (no look-ahead bias)")
-    
-    # Train/test split (matching PCA/EW approach)
-    unique_months = sorted(market_series['YEAR_MONTH'].unique())
-    n_train = int(len(unique_months) * train_frac)
-    train_months = unique_months[:n_train]
-    train_mask = market_series['YEAR_MONTH'].isin(train_months)
-    
-    M = market_series[core_proxies].values
-    M_detrended = np.zeros_like(M)
-    
-    # Apply same de-trending as PCA method (train-only trend estimation)
-    for i, proxy in enumerate(core_proxies):
-        values = M[:, i]
-        
-        # Estimate trend on TRAINING period only
-        train_values = values[train_mask]
-        train_indices = np.arange(len(train_values))
-        
-        # Fit linear trend on training data
-        trend_coef = np.polyfit(train_indices, train_values, deg=1)
-        
-        # Apply trend removal to FULL sample
-        full_indices = np.arange(len(values))
-        trend_line = np.polyval(trend_coef, full_indices)
-        detrended = values - trend_line
-        
-        # Standardize
-        std_val = detrended.std()
-        if std_val > 0:
-            M_detrended[:, i] = detrended / std_val
-        else:
-            M_detrended[:, i] = 0
-    
-    M_std = M_detrended  # Use de-trended standardized values
-    
-    # Compute pairwise covariance (handles missing data better)
-    print(f"  Computing pairwise covariance matrix...")
-    cov_matrix = np.zeros((len(core_proxies), len(core_proxies)))
-    for i in range(len(core_proxies)):
-        for j in range(i, len(core_proxies)):
-            # Pairwise complete observations
-            valid = ~(np.isnan(M_std[:, i]) | np.isnan(M_std[:, j]))
-            if valid.sum() >= 10:
-                cov_matrix[i, j] = np.cov(M_std[valid, i], M_std[valid, j])[0, 1]
-                cov_matrix[j, i] = cov_matrix[i, j]
-    
-    # Eigen-decomposition
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
-    # Sort by decreasing eigenvalue
-    idx = eigenvalues.argsort()[::-1]
-    eigenvalues = eigenvalues[idx]
-    eigenvectors = eigenvectors[:, idx]
-    
-    # First eigenvector = APC weights
-    w_apc = eigenvectors[:, 0]
-    explained_var_apc = eigenvalues[0] / eigenvalues.sum()
-    
-    print(f"  Explained variance: {explained_var_apc*100:.2f}%")
-    print(f"  Weights (market-state APC):")
-    for proxy, weight in zip(core_proxies, w_apc):
-        print(f"    {proxy:<18}: {weight:>8.4f}")
-    
-    # Compute market index
-    market_apc_scores = M_std @ w_apc
-    market_apc_df = pd.DataFrame({
-        'MONTH': market_series['YEAR_MONTH'],
-        'MLIQ_APC_STATE': market_apc_scores
+    weights_df = pd.DataFrame({
+        'proxy': core_proxies, 
+        'weight_equal': w_equal, 
+        'weight_pca': w_pca_market,
+        'used_in_market_index': True
     })
+    weights_df.to_csv('pca_weights_market.csv', index=False)
     
-    # CRITICAL FIX: Sign alignment for liquidity interpretation
-    # APC scores should behave like liquidity index: fall during crises (2008, 2020)
-    # Use BOTH AMIHUD correlation AND crisis validation to determine sign
-    needs_flip = False
+    print(f"  Saved: liq_market_index_equal_weighted.csv")
+    print(f"  Saved: liq_market_index_pca_variance_weighted.csv")
+    print(f"  Saved: pca_weights_market.csv")
     
-    if 'AMIHUD' in core_proxies:
-        amihud_idx = list(core_proxies).index('AMIHUD')
-        corr_check = np.corrcoef(market_apc_scores, M_std[:, amihud_idx])[0, 1]
-        
-        print(f"  [DIAGNOSTIC] Initial APC correlation with standardized AMIHUD: {corr_check:.3f}")
-        
-        # Check 1: AMIHUD correlation (should be negative for liquidity index)
-        if corr_check > 0:
-            print(f"  [CHECK 1] Positive AMIHUD correlation suggests wrong sign")
-            needs_flip = True
-        else:
-            print(f"  [CHECK 1] Negative AMIHUD correlation suggests correct sign")
-        
-        # Check 2: Crisis period validation
-        crisis_months = market_series['YEAR_MONTH'].isin([
-            pd.Period('2008-09', freq='M'), 
-            pd.Period('2008-10', freq='M'),
-            pd.Period('2009-01', freq='M')
-        ])
-        if crisis_months.sum() > 0:
-            crisis_mean = market_apc_scores[crisis_months].mean()
-            overall_mean = market_apc_scores.mean()
-            print(f"  [CHECK 2] 2008 crisis: APC mean = {crisis_mean:.2f}, Overall mean = {overall_mean:.2f}")
-            
-            if crisis_mean > overall_mean:
-                print(f"  [CHECK 2] APC rises during crisis - suggests wrong sign")
-                if not needs_flip:
-                    print(f"  [WARNING] AMIHUD and crisis checks disagree! Using crisis check.")
-                needs_flip = True
-            else:
-                print(f"  [CHECK 2] APC falls during crisis - suggests correct sign")
-        
-        # Apply single sign flip based on both checks
-        if needs_flip:
-            print(f"\n  [FIX] Applying sign flip for liquidity interpretation")
-            w_apc = -w_apc
-            market_apc_scores = -market_apc_scores
-            market_apc_df['MLIQ_APC_STATE'] = market_apc_scores
-            
-            # Verify both checks after flip
-            corr_after = np.corrcoef(market_apc_scores, M_std[:, amihud_idx])[0, 1]
-            crisis_mean_after = market_apc_scores[crisis_months].mean() if crisis_months.sum() > 0 else 0
-            print(f"  [VERIFY] After flip: AMIHUD corr = {corr_after:.3f}, Crisis mean = {crisis_mean_after:.2f}")
-        else:
-            print(f"\n  [OK] Both checks passed - sign is correct")
+    return market_proxies_std, w_equal, explained_var_market, core_proxies
+
+# ============================================================================
+# G) APC METHOD (Asymptotic Principal Components)
+# ============================================================================
+
+def build_market_apc_index(df, core_proxies, proxy_meta):
+    """
+    Build market liquidity index using APC - SIMPLE RAW VERSION
+    Each proxy aggregated independently (pairwise deletion approach)
+    Uses ALL available data (no train/test split)
+    """
+    print("\n[G] Market Liquidity Index - APC Method (RAW - Pairwise Deletion)")
+    print("  Using ALL data (100% for index construction)")
     
-    # Compute stock scores using APC weights on cross-sectional z-scores
-    z_cols = [f"Z_{p}" for p in core_proxies]
-    stock_data = df[['SYMBOL', 'YEAR_MONTH'] + core_proxies].dropna(subset=core_proxies).copy()
+    # APC: Aggregate each proxy INDEPENDENTLY (don't require all proxies present)
+    print(f"  [APC] Using pairwise deletion (each proxy uses all available stocks)")
     
-    # Cross-sectional standardization
+    # Build market proxy series - aggregate each proxy separately
+    all_months = df['YEAR_MONTH'].unique()
+    market_proxies_raw = pd.DataFrame({'YEAR_MONTH': sorted(all_months)})
+    
     for proxy in core_proxies:
-        stock_data[f'Z_{proxy}'] = stock_data.groupby('YEAR_MONTH')[proxy].transform(
-            lambda x: (x - x.mean()) / x.std() if x.std() > 0 else 0
+        # For each proxy, use ALL stocks that have this proxy (don't require others)
+        proxy_data = df[['SYMBOL', 'YEAR_MONTH', proxy]].dropna(subset=[proxy])
+        print(f"    {proxy}: {len(proxy_data):,} observations for aggregation")
+        
+        # Aggregate this proxy to market level
+        proxy_market = proxy_data.groupby('YEAR_MONTH')[proxy].median().reset_index()
+        
+        # Merge with main dataframe
+        market_proxies_raw = market_proxies_raw.merge(
+            proxy_market, on='YEAR_MONTH', how='left'
         )
     
-    X_stock = stock_data[z_cols].values
-    stock_data['LIQ_APC_STATE'] = X_stock @ w_apc
+    # Now we have market level data where each proxy might have different coverage
+    print(f"\n  Market proxy series: {len(market_proxies_raw)} months x {len(core_proxies)} proxies")
+    print(f"  Using ALL {len(core_proxies)} core proxies: {', '.join(core_proxies)}")
     
-    # Save outputs
-    stock_data[['SYMBOL', 'YEAR_MONTH', 'LIQ_APC_STATE']].rename(columns={'YEAR_MONTH':'MONTH'}).to_csv('liq_stock_scores_apc_state.csv', index=False)
-    market_apc_df.to_csv('liq_market_index_apc_state.csv', index=False)
-    pd.DataFrame({'proxy': core_proxies, 'weight': w_apc}).to_csv('apc_state_weights.csv', index=False)
+    # Check coverage for each proxy
+    for proxy in core_proxies:
+        non_missing = market_proxies_raw[proxy].notna().sum()
+        print(f"    {proxy}: {non_missing}/{len(market_proxies_raw)} months ({100*non_missing/len(market_proxies_raw):.1f}% coverage)")
     
-    print(f"  Saved: liq_stock_scores_apc_state.csv, liq_market_index_apc_state.csv, apc_state_weights.csv")
+    # Simple standardization: subtract mean, divide by std
+    print(f"\n  Standardizing proxies (no detrending)...")
+    market_proxies_std = market_proxies_raw.copy()
     
-    return stock_data, market_apc_df, w_apc, explained_var_apc
+    for proxy in core_proxies:
+        values = market_proxies_raw[proxy].values
+        mean_val = np.nanmean(values)
+        std_val = np.nanstd(values)
+        if std_val > 0:
+            market_proxies_std[proxy] = (values - mean_val) / std_val
+        else:
+            market_proxies_std[proxy] = 0
+            print(f"    [WARNING] {proxy}: Zero variance")
+    
+    # APC: Build covariance matrix from RAW (UNSTANDARDIZED) data  
+    # KEY DIFFERENCE: PCA uses correlation matrix (standardized), APC uses covariance matrix (raw scale)
+    print(f"\n  [APC] Building pairwise covariance matrix from RAW unstandardized data...")
+    print(f"  Difference from PCA: APC uses covariance (preserves scale), PCA uses correlation")
+    
+    n_proxies = len(core_proxies)
+    cov_matrix = np.zeros((n_proxies, n_proxies))
+    
+    # Compute pairwise covariances using RAW (unstandardized) data
+    for i in range(n_proxies):
+        for j in range(i, n_proxies):
+            proxy_i = core_proxies[i]
+            proxy_j = core_proxies[j]
+            
+            # Get RAW data where BOTH proxies are available
+            xi = market_proxies_raw[proxy_i].values
+            xj = market_proxies_raw[proxy_j].values
+            
+            # Find observations where both are non-missing
+            valid_mask = ~(np.isnan(xi) | np.isnan(xj))
+            xi_valid = xi[valid_mask]
+            xj_valid = xj[valid_mask]
+            
+            if len(xi_valid) > 1:
+                # Pairwise covariance on RAW data
+                cov_ij = np.cov(xi_valid, xj_valid)[0, 1]
+                cov_matrix[i, j] = cov_ij
+                cov_matrix[j, i] = cov_ij
+                if i != j:
+                    print(f"    Cov({proxy_i}, {proxy_j}): {cov_ij:.6e} from {len(xi_valid)} obs (raw scale)")
+    
+    print(f"  Pairwise covariance matrix shape: {cov_matrix.shape}")
+    
+    # Extract first eigenvector
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+    
+    # Get first principal component (largest eigenvalue)
+    idx = np.argsort(eigenvalues)[::-1]
+    w_apc = eigenvectors[:, idx[0]]
+    explained_var_apc = eigenvalues[idx[0]] / eigenvalues.sum()
+    
+    print(f"\n  [APC WEIGHTS (from raw covariance)]")
+    print(f"  Explained variance: {explained_var_apc*100:.2f}%")
+    print(f"  Weights:")
+    for proxy, weight in zip(core_proxies, w_apc):
+        print(f"    {proxy:<18}: {weight:>8.4e}")
+    
+    # Compute APC index using STANDARDIZED data (for comparability) but with weights from RAW covariance
+    print(f"\n  Computing APC index...")
+    
+    # For each month, compute index using available proxies from standardized data
+    apc_index = []
+    for row_idx, row in market_proxies_std.iterrows():
+        proxy_vals = row[core_proxies].values.astype(float)
+        
+        # Use only non-missing proxies for this month
+        valid_mask = ~np.isnan(proxy_vals)
+        if valid_mask.sum() > 0:
+            idx_val = -(proxy_vals[valid_mask] @ w_apc[valid_mask])
+            apc_index.append(idx_val)
+        else:
+            apc_index.append(np.nan)
+    
+    market_proxies_std['LIQ_MARKET_APC'] = apc_index
+    
+    # Sign alignment check (use non-missing values)
+    if 'AMIHUD' in core_proxies:
+        # Compute correlation on non-missing pairs
+        valid_mask = market_proxies_std[['LIQ_MARKET_APC', 'AMIHUD']].notna().all(axis=1)
+        if valid_mask.sum() > 0:
+            corr_check = market_proxies_std.loc[valid_mask, ['LIQ_MARKET_APC', 'AMIHUD']].corr().iloc[0, 1]
+            if corr_check > 0:
+                print(f"  [FIX] Flipping APC sign (corr with AMIHUD: {corr_check:.3f})")
+                w_apc = -w_apc
+                market_proxies_std['LIQ_MARKET_APC'] = -market_proxies_std['LIQ_MARKET_APC']
+    
+    print(f"\n  Interpretation: Higher LIQ_APC = MORE liquid market")
+    print(f"  APC index coverage: {market_proxies_std['LIQ_MARKET_APC'].notna().sum()}/{len(market_proxies_std)} months")
+    
+    # Save APC index
+    apc_output = market_proxies_std[['YEAR_MONTH', 'LIQ_MARKET_APC']].copy()
+    apc_output.columns = ['MONTH', 'LIQ_APC']
+    apc_output.to_csv('liq_market_index_apc.csv', index=False)
+    
+    # Save APC weights
+    apc_weights_df = pd.DataFrame({
+        'proxy': core_proxies,
+        'weight_apc': w_apc,
+        'used_in_market_index': True
+    })
+    apc_weights_df.to_csv('apc_weights_market.csv', index=False)
+    
+    print(f"  Saved: liq_market_index_apc.csv")
+    print(f"  Saved: apc_weights_market.csv")
+    
+    return market_proxies_std, w_apc, explained_var_apc, core_proxies
 
-stock_apc_state, market_apc_state, apc_state_weights, apc_state_expl_var = build_market_state_apc(final_data, core_proxies)
+stock_pca, pca_weights_stock, pca_expl_var_stock = build_stock_liquidity_scores(monthly_std, core_proxies, PROXY_META)
+market_pca, pca_weights_market, pca_expl_var_market, core_proxies_market_filtered = build_market_liquidity_index(final_data, core_proxies, PROXY_META)
+market_apc, apc_weights_market, apc_expl_var_market, core_proxies_apc_filtered = build_market_apc_index(final_data, core_proxies, PROXY_META)
 
 # ============================================================================
-# I) COMPARISON: Version 1 (Market-State PCA vs APC)
-# ============================================================================
-
-def compare_market_state_indices(market_pca, market_apc_state, stock_pca, stock_apc_state):
-    """Compare matched market-state PCA and APC indices"""
-    print("\n[I] Comparison: Market-State PCA vs APC (Matched)")
-    
-    # Merge market indices
-    market_both = market_pca[['YEAR_MONTH', 'LIQ_MARKET']].merge(
-        market_apc_state, left_on='YEAR_MONTH', right_on='MONTH'
-    )
-    
-    # Market state correlations
-    pearson = market_both['LIQ_MARKET'].corr(market_both['MLIQ_APC_STATE'])
-    spearman = market_both['LIQ_MARKET'].corr(market_both['MLIQ_APC_STATE'], method='spearman')
-    
-    print(f"  Market state correlations: Pearson={pearson:.4f}, Spearman={spearman:.4f}")
-    
-    # VALIDATION: Correlation should be positive (both measure liquidity)
-    if pearson < 0:
-        print(f"  [WARNING] Negative correlation suggests sign inconsistency between methods!")
-    elif pearson > 0.5:
-        print(f"  [OK] Strong positive correlation confirms both measure same phenomenon")
-    else:
-        print(f"  [NOTE] Moderate correlation - methods weight dimensions differently")
-    
-    # Rolling 24-month correlation
-    market_both = market_both.sort_values('YEAR_MONTH')
-    rolling_corr = market_both['LIQ_MARKET'].rolling(24).corr(market_both['MLIQ_APC_STATE'])
-    print(f"  Rolling 24-month corr: Mean={rolling_corr.mean():.4f}, Min={rolling_corr.min():.4f}, Max={rolling_corr.max():.4f}")
-    
-    # Stock-level monthly rank correlations (using market-state derived scores)
-    stock_both = stock_pca[['SYMBOL', 'YEAR_MONTH', 'LIQ_STOCK']].merge(
-        stock_apc_state[['SYMBOL', 'YEAR_MONTH', 'LIQ_APC_STATE']], on=['SYMBOL', 'YEAR_MONTH']
-    )
-    
-    monthly_rank_corr = []
-    for month, group in stock_both.groupby('YEAR_MONTH'):
-        if len(group) >= 10:
-            corr = group['LIQ_STOCK'].corr(group['LIQ_APC_STATE'], method='spearman')
-            monthly_rank_corr.append(corr)
-    
-    print(f"  Stock rank corr (monthly): Median={np.median(monthly_rank_corr):.4f}, "
-          f"IQR=[{np.percentile(monthly_rank_corr,25):.4f},{np.percentile(monthly_rank_corr,75):.4f}]")
-    
-    # Top decile overlap
-    decile_overlaps = []
-    for month, group in stock_both.groupby('YEAR_MONTH'):
-        if len(group) >= 10:
-            top_pca = set(group.nlargest(int(len(group)*0.1), 'LIQ_STOCK')['SYMBOL'])
-            top_apc = set(group.nlargest(int(len(group)*0.1), 'LIQ_APC_STATE')['SYMBOL'])
-            overlap = len(top_pca & top_apc) / len(top_pca) if len(top_pca) > 0 else 0
-            decile_overlaps.append(overlap)
-    
-    print(f"  Top decile overlap: Mean={np.mean(decile_overlaps)*100:.1f}%, Median={np.median(decile_overlaps)*100:.1f}%")
-    
-    # Return summary
-    summary_market_state = {
-        'version': 'market_state_pca_vs_apc',
-        'market_pearson': float(pearson),
-        'market_spearman': float(spearman),
-        'rolling_corr_mean': float(rolling_corr.mean()),
-        'stock_rank_corr_median': float(np.median(monthly_rank_corr)),
-        'stock_rank_corr_iqr': [float(np.percentile(monthly_rank_corr, 25)), float(np.percentile(monthly_rank_corr, 75))],
-        'top_decile_overlap_mean': float(np.mean(decile_overlaps)),
-        'top_decile_overlap_median': float(np.median(decile_overlaps))
-    }
-    
-    return summary_market_state
-
-# Execute PCA vs APC comparison
-comparison_market_state = compare_market_state_indices(market_pca, market_apc_state, stock_pca, stock_apc_state)
-
-print(f"\n  PCA vs APC Comparison: Pearson={comparison_market_state['market_pearson']:.4f}, Spearman={comparison_market_state['market_spearman']:.4f}")
-
-# ============================================================================
-# G) FINAL SUMMARY
+# H) FINAL SUMMARY
 # ============================================================================
 
 print("\n" + "="*80)
@@ -1895,26 +1737,18 @@ for i, proxy in enumerate(core_proxies, 1):
     print(f"  {i}. {proxy:<18} [{meta['dimension']}] priority={meta['priority']}")
 
 print(f"\nMethodological Approach:")
-print(f"  Index Construction: Equal-weighted (primary) + PCA (comparison)")
+print(f"  Index Construction: Equal-weighted (primary) + PCA + APC (comparison)")
 print(f"  Stock Scores: Cross-sectional PCA on z-scores")
-print(f"  Market Index: Equal-weighted aggregation with de-trending")
-print(f"  Rationale: Equal-weighting ensures balanced dimensional representation")
-print(f"            PCA provided for robustness checks and variance decomposition")
+print(f"  Market Index: Multiple methods for robustness")
+print(f"    - Equal-weighted: All proxies contribute equally")
+print(f"    - PCA: Variance-weighted via standard covariance")
+print(f"    - APC: Asymptotic Principal Components (pairwise covariances)")
 
 print(f"\nIndex Statistics:")
 print(f"  Stock Scores (PCA): {pca_expl_var_stock*100:.1f}% variance, {len(stock_pca):,} observations")
 print(f"  Market Index (Equal-weighted): {len(market_pca):,} months")
-print(f"  Market Index (PCA alternative): {pca_expl_var_market*100:.1f}% variance")
-print(f"  Market Index (APC alternative): {apc_state_expl_var*100:.1f}% variance")
-
-print(f"\nMethod Validation:")
-print(f"  PCA vs APC Correlation: {comparison_market_state['market_pearson']:.3f} (Pearson)")
-if comparison_market_state['market_pearson'] > 0.5:
-    print(f"  [OK] Strong agreement between methods")
-elif comparison_market_state['market_pearson'] < 0:
-    print(f"  [WARNING] Sign inconsistency detected - verify outputs")
-else:
-    print(f"  [NOTE] Moderate agreement - methods weight dimensions differently")
+print(f"  Market Index (PCA): {pca_expl_var_market*100:.1f}% variance")
+print(f"  Market Index (APC): {apc_expl_var_market*100:.1f}% variance")
 
 print(f"\nOutput Files:")
 print("  Primary outputs (Equal-weighted index):")
@@ -1923,9 +1757,8 @@ print("    - liq_stock_scores_pca.csv (stock-level characteristic scores)")
 print("    - pca_weights_stock.csv, pca_weights_market.csv")
 print("  Alternative methods (for robustness validation):")
 print("    - liq_market_index_pca_variance_weighted.csv (PCA-weighted)")
-print("    - liq_market_index_apc_state.csv (APC-weighted)")
-print("    - liq_stock_scores_apc_state.csv")
-print("    - apc_state_weights.csv")
+print("    - liq_market_index_apc.csv (APC method)")
+print("    - apc_weights_market.csv")
 print("  Auxiliary data:")
 print("    - liquidity_correlation_matrix.csv, liquidity_correlation_matrix.png")
 print("    - proxy_definitions_report.csv")
@@ -1934,8 +1767,8 @@ print("\n" + "="*80)
 print("RECOMMENDED USAGE:")
 print("  PRIMARY: Use equal-weighted index (liq_market_index_equal_weighted.csv)")
 print("           Balanced dimensional representation, captures all liquidity aspects")
-print("  VALIDATION: Compare with PCA/APC outputs for robustness")
-print("              If all 3 methods agree on crisis detection, results are robust")
+print("  VALIDATION: Compare with PCA and APC outputs for robustness")
+print("              All methods should agree on major crisis periods")
 print("  STOCK SCORES: Use liq_stock_scores_pca.csv for cross-sectional analysis")
 print("="*80)
 
@@ -1951,23 +1784,21 @@ LIQUIDITY_PLOTS_DIR = Path("Liquidity_Plots")
 LIQUIDITY_PLOTS_DIR.mkdir(exist_ok=True)
 
 # ============================================================================
-# COMPARISON PLOTS: PCA vs APC vs EQUAL-WEIGHTED
+# COMPARISON PLOTS: PCA vs EQUAL-WEIGHTED vs APC
 # ============================================================================
-print("\n[1/9] Generating comparison plots for all 3 methods...")
+print("\n[1/9] Generating comparison plots for all three methods...")
 
-# Load all 3 indices
+# Load all three indices
 pca_var_df = pd.read_csv('liq_market_index_pca_variance_weighted.csv')
 pca_var_df['DATE'] = pd.to_datetime(pca_var_df['MONTH'].astype(str))
 pca_var_df.rename(columns={'LIQ_MARKET': 'LIQ_PCA'}, inplace=True)
 
-apc_df = pd.read_csv('liq_market_index_apc_state.csv')
-apc_df['DATE'] = pd.to_datetime(apc_df['MONTH'].astype(str))
-# Use saved MLIQ_APC_STATE directly - already corrected in build_market_state_apc()
-apc_df['LIQ_APC'] = apc_df['MLIQ_APC_STATE']  # No flip needed - sign already correct
-
 ew_df = pd.read_csv('liq_market_index_equal_weighted.csv')  # This is equal-weighted
 ew_df['DATE'] = pd.to_datetime(ew_df['MONTH'].astype(str))
 ew_df.rename(columns={'LIQ_MARKET': 'LIQ_EW'}, inplace=True)
+
+apc_df = pd.read_csv('liq_market_index_apc.csv')
+apc_df['DATE'] = pd.to_datetime(apc_df['MONTH'].astype(str))
 
 # Plot 1a: PCA (Variance-Weighted)
 fig, ax = plt.subplots(figsize=(16, 6))
@@ -1991,7 +1822,7 @@ plt.savefig(LIQUIDITY_PLOTS_DIR / 'method1_pca_index.png', dpi=300, bbox_inches=
 plt.close()
 print("  [OK] Saved: method1_pca_index.png")
 
-# Plot 1b: APC (Pairwise Covariance)
+# Plot 1b: APC (Asymptotic Principal Components)
 fig, ax = plt.subplots(figsize=(16, 6))
 ax.plot(apc_df['DATE'], apc_df['LIQ_APC'], linewidth=1.5, color='purple', label='APC Liquidity Index')
 ax.axvspan(pd.to_datetime('2008-01'), pd.to_datetime('2009-06'), alpha=0.15, color='red', label='2008-09 Crisis')
@@ -2005,7 +1836,7 @@ ax.text(worst['DATE'], worst['LIQ_APC'], f"  Worst: {worst['DATE'].strftime('%b 
 
 ax.set_xlabel('Date', fontsize=12, fontweight='bold')
 ax.set_ylabel('APC Liquidity Index', fontsize=12, fontweight='bold')
-ax.set_title('Method 2: APC Index (Pairwise Covariance)\nWeights from eigenvector of pairwise covariance matrix', fontsize=14, fontweight='bold')
+ax.set_title('Method 2: APC Index (Asymptotic Principal Components)\nPairwise covariance-based weights', fontsize=14, fontweight='bold')
 ax.legend(loc='upper left', fontsize=10)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
@@ -2027,7 +1858,7 @@ ax.text(worst['DATE'], worst['LIQ_EW'], f"  Worst: {worst['DATE'].strftime('%b %
 
 ax.set_xlabel('Date', fontsize=12, fontweight='bold')
 ax.set_ylabel('Equal-Weighted Liquidity Index', fontsize=12, fontweight='bold')
-ax.set_title('Method 3: Equal-Weighted Index (Balanced Approach)\nAll 6 proxies contribute equally - captures all liquidity dimensions', fontsize=14, fontweight='bold')
+ax.set_title('Method 3: Equal-Weighted Index (Balanced Approach - PRIMARY)\nAll proxies contribute equally - captures all liquidity dimensions', fontsize=14, fontweight='bold')
 ax.legend(loc='upper left', fontsize=10)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
@@ -2035,7 +1866,7 @@ plt.savefig(LIQUIDITY_PLOTS_DIR / 'method3_equal_weighted_index.png', dpi=300, b
 plt.close()
 print("  [OK] Saved: method3_equal_weighted_index.png")
 
-# Plot 1d: Comparison of all 3 methods
+# Plot 1d: Comparison of all three methods
 fig, ax = plt.subplots(figsize=(16, 7))
 ax.plot(pca_var_df['DATE'], pca_var_df['LIQ_PCA'], linewidth=1.5, color='darkgreen', label='PCA (Variance-Weighted)', alpha=0.7)
 ax.plot(apc_df['DATE'], apc_df['LIQ_APC'], linewidth=1.5, color='purple', label='APC (Pairwise Covariance)', alpha=0.7)
@@ -2053,7 +1884,7 @@ ax.text(covid_date, ax.get_ylim()[1]*0.95, 'COVID-19\nMarch 2020',
 
 ax.set_xlabel('Date', fontsize=12, fontweight='bold')
 ax.set_ylabel('Liquidity Index (Standardized)', fontsize=12, fontweight='bold')
-ax.set_title('Comparison of All Three Methods\nEqual-Weighted captures COVID best; PCA & APC miss it', fontsize=14, fontweight='bold')
+ax.set_title('Comparison of All Three Methods: PCA vs APC vs Equal-Weighted\nAll methods show similar patterns with slight differences', fontsize=14, fontweight='bold')
 ax.legend(loc='upper left', fontsize=10)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()

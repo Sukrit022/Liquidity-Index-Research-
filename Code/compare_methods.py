@@ -13,8 +13,8 @@ pca_ew['DATE'] = pd.to_datetime(pca_ew['MONTH'].astype(str))
 pca_var['DATE'] = pd.to_datetime(pca_var['MONTH'].astype(str))
 apc['DATE'] = pd.to_datetime(apc['MONTH'].astype(str))
 
-# Flip APC sign (currently MLIQ = illiquidity)
-apc['LIQ'] = -apc['MLIQ_APC_STATE']
+# LIQ_APC column is already sign-corrected in build_market_state_apc()
+apc['LIQ'] = apc['LIQ_APC']
 
 # Create comparison plot
 fig, axes = plt.subplots(3, 1, figsize=(16, 12), sharex=True)
@@ -88,10 +88,11 @@ print(f"  PCA (variance):  {worst_pca['DATE'].strftime('%Y-%m')} ({worst_pca['LI
 print(f"  APC:            {worst_apc['DATE'].strftime('%Y-%m')} ({worst_apc['LIQ']:.2f})")
 
 print("\n" + "="*70)
-print("CONCLUSION:")
-print("- Equal-Weighted: Captures COVID as worst crisis (correct!)")
-print("- PCA (variance): Misses COVID, shows 2009 as worst")
-print("- APC: Also misses COVID, shows 2009 as worst")
-print("\nRECOMMENDATION: Use Equal-Weighted, but acknowledge PCA is not needed.")
-print("Alternative: Use PCA weights but manually ensure balanced contribution.")
+print("OBSERVATIONS:")
+print("- Equal-Weighted: Identifies COVID period as largest liquidity deterioration")
+print("- PCA (variance): Dominated by AMIHUD; identifies 2009 as worst period")
+print("- APC: Similar to PCA; identifies 2009 as worst period")
+print("\nNOTE: Whether 2008-09 or 2020 was the 'worse' liquidity event depends on")
+print("which dimensions of liquidity are weighted most heavily. All three methods")
+print("detect both events; they differ in relative severity ranking.")
 print("="*70)

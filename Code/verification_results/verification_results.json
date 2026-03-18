@@ -8,9 +8,9 @@
     "ZERO_RATIO_manual": 0.0,
     "LOT_manual": 0.047619047619047616,
     "ROLL_SPREAD_manual": 14.951297152745848,
-    "AMIHUD_computed": 1.8214483924453037e-06,
-    "AMIHUD_diff": 1.263075988533554e-06,
-    "AMIHUD_rel_diff": 2.2616623125628,
+    "AMIHUD_computed": 9.530078628669139e-07,
+    "AMIHUD_diff": 3.946354589551642e-07,
+    "AMIHUD_rel_diff": 0.706633767740339,
     "AMIVEST_computed": 3.4385717744395498e-12,
     "AMIVEST_diff": 2.8898364108963986e-12,
     "AMIVEST_rel_diff": 0.028740653976879277,
@@ -26,9 +26,9 @@
   },
   "crisis_periods": {
     "2008_financial_crisis": {
-      "mean": -1.298063945522233,
-      "max": -0.6606557491954996,
-      "z_score": -2.118232237860517,
+      "mean": -1.3306801933242718,
+      "max": -0.7460133959023867,
+      "z_score": -2.507143115014735,
       "months": [
         "2008-09",
         "2008-10",
@@ -38,9 +38,9 @@
       "n_months": 4
     },
     "2009_crisis_aftermath": {
-      "mean": -0.6879199104860488,
-      "max": -0.4403844292984558,
-      "z_score": -1.0062284304987514,
+      "mean": -0.7749585169323993,
+      "max": -0.549158893849905,
+      "z_score": -1.460104328520372,
       "months": [
         "2009-01",
         "2009-02",
@@ -49,9 +49,9 @@
       "n_months": 3
     },
     "2020_covid_shock": {
-      "mean": -1.7809075688272158,
-      "max": -0.20317713389588352,
-      "z_score": -2.998227643279254,
+      "mean": -1.4901448506935722,
+      "max": 0.27360526801789664,
+      "z_score": -2.807591502100781,
       "months": [
         "2020-03",
         "2020-04",
@@ -62,30 +62,120 @@
   },
   "monotonicity": {
     "amihud_pass_rate": 0.0,
-    "zero_pass_rate": 0.016877637130801686,
+    "zero_pass_rate": 0.02531645569620253,
     "overall_pass": 0,
     "monthly_results": [
       {
         "month": "2005-04-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": -0.5272727272727272,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.5636363636363636,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2005-05-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.1111111111111111,
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2005-06-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2005-07-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.05454545454545454,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2005-08-01 00:00:00",
+        "amihud_spearman": -0.5515151515151515,
+        "zero_spearman": -0.04242424242424241,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2005-09-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.19999999999999998,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2005-10-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.28484848484848485,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2005-11-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.38181818181818183,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.7777777777777778,
+        "amihud_passes": false,
+        "zero_passes": true
+      },
+      {
+        "month": "2005-12-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": 0.05454545454545454,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2006-01-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2006-02-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.03647433262080388,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2006-03-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.33434804902403553,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2006-04-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
         "zero_spearman": 0.09090909090909088,
         "amihud_pct_increasing": 0.1111111111111111,
         "zero_pct_increasing": 0.5555555555555556,
@@ -93,116 +183,35 @@
         "zero_passes": false
       },
       {
-        "month": "2005-07-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2005-08-01 00:00:00",
-        "amihud_spearman": -0.6727272727272726,
-        "zero_spearman": -0.04242424242424241,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2005-09-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": 0.13939393939393938,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2005-10-01 00:00:00",
-        "amihud_spearman": -0.9272727272727272,
-        "zero_spearman": -0.22424242424242422,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2005-11-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": 0.33333333333333326,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.7777777777777778,
-        "amihud_passes": false,
-        "zero_passes": true
-      },
-      {
-        "month": "2005-12-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": -0.2121212121212121,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2006-01-01 00:00:00",
-        "amihud_spearman": -0.9272727272727272,
-        "zero_spearman": -0.04242424242424241,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2006-02-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2006-03-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
-        "zero_spearman": -0.23636363636363633,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2006-04-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": 0.0303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
         "month": "2006-05-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.23636363636363633,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.05454545454545454,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2006-06-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
+        "amihud_spearman": -0.8060606060606059,
         "zero_spearman": -0.34545454545454546,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2006-07-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.29696969696969694,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2006-08-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
         "zero_spearman": -0.1515151515151515,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
@@ -210,18 +219,9 @@
         "zero_passes": false
       },
       {
-        "month": "2006-08-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.10303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
         "month": "2006-09-01 00:00:00",
         "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.3696969696969697,
+        "zero_spearman": -0.2727272727272727,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
@@ -229,7 +229,7 @@
       },
       {
         "month": "2006-10-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
+        "amihud_spearman": -0.9272727272727272,
         "zero_spearman": 0.09090909090909088,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.5555555555555556,
@@ -239,15 +239,15 @@
       {
         "month": "2006-11-01 00:00:00",
         "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.0303030303030303,
+        "zero_spearman": -0.1515151515151515,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2006-12-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
+        "amihud_spearman": -0.8666666666666665,
         "zero_spearman": -0.3696969696969697,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
@@ -256,72 +256,72 @@
       },
       {
         "month": "2007-01-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.8909090909090909,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.6606060606060605,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-02-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.01818181818181818,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": 0.0303030303030303,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-03-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.09090909090909088,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": 0.006060606060606061,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-04-01 00:00:00",
-        "amihud_spearman": -0.8666666666666665,
-        "zero_spearman": -0.35757575757575755,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.2121212121212121,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-05-01 00:00:00",
-        "amihud_spearman": -0.8666666666666665,
-        "zero_spearman": -0.8424242424242423,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.7575757575757575,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-06-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": -0.07878787878787878,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": 0.09090909090909088,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-07-01 00:00:00",
         "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.32121212121212117,
+        "zero_spearman": -0.28484848484848485,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-08-01 00:00:00",
-        "amihud_spearman": -0.8666666666666665,
-        "zero_spearman": -0.9030303030303028,
-        "amihud_pct_increasing": 0.1111111111111111,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.8666666666666665,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.1111111111111111,
         "amihud_passes": false,
         "zero_passes": false
@@ -329,61 +329,61 @@
       {
         "month": "2007-09-01 00:00:00",
         "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.8060606060606059,
+        "zero_spearman": -0.7939393939393938,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-10-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.5515151515151515,
-        "amihud_pct_increasing": 0.1111111111111111,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.38905954795524134,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-11-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
-        "zero_spearman": -0.8787878787878788,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.6606060606060605,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2007-12-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": -0.6443798763008685,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2008-01-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.6484848484848483,
-        "amihud_pct_increasing": 0.1111111111111111,
+        "amihud_spearman": -0.9757575757575757,
+        "zero_spearman": -0.6,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2008-01-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.5757575757575757,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2008-02-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
-        "zero_spearman": -0.7454545454545454,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.6484848484848483,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-03-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.8303030303030302,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.8060606060606059,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
@@ -391,26 +391,26 @@
       },
       {
         "month": "2008-04-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.8424242424242423,
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.6484848484848483,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-05-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.9030303030303028,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.9515151515151514,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-06-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.8303030303030302,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.8787878787878788,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
@@ -418,26 +418,26 @@
       },
       {
         "month": "2008-07-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.9393939393939393,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.9272727272727272,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.1111111111111111,
+        "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-08-01 00:00:00",
-        "amihud_spearman": -0.9393939393939393,
-        "zero_spearman": -0.8424242424242423,
-        "amihud_pct_increasing": 0.1111111111111111,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.8909090909090909,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-09-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.7454545454545454,
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.6484848484848483,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
@@ -445,241 +445,25 @@
       },
       {
         "month": "2008-10-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.6969696969696969,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.9636363636363635,
+        "zero_spearman": -0.8303030303030302,
+        "amihud_pct_increasing": 0.1111111111111111,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-11-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.6242424242424242,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.4666666666666666,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2008-12-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.5393939393939393,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-01-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.7333333333333332,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-02-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.3939393939393939,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-03-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.35757575757575755,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-04-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.07878787878787878,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-05-01 00:00:00",
-        "amihud_spearman": -0.6969696969696969,
-        "zero_spearman": -0.7696969696969697,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-06-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.8545454545454544,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-07-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.38181818181818183,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-08-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.1515151515151515,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-09-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.4666666666666666,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-10-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.5151515151515151,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-11-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.6121212121212121,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2009-12-01 00:00:00",
         "amihud_spearman": -0.9515151515151514,
-        "zero_spearman": -0.8303030303030302,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-01-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-02-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": 0.29696969696969694,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-03-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.34545454545454546,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-04-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-05-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.4666666666666666,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-06-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.22424242424242422,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-07-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.2553203283456271,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-08-01 00:00:00",
-        "amihud_spearman": -0.9515151515151514,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-09-01 00:00:00",
-        "amihud_spearman": -0.9515151515151514,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-10-01 00:00:00",
-        "amihud_spearman": -0.9515151515151514,
-        "zero_spearman": -0.07878787878787878,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-11-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.4787878787878787,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2010-12-01 00:00:00",
-        "amihud_spearman": -0.9151515151515152,
         "zero_spearman": -0.28484848484848485,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
@@ -687,44 +471,134 @@
         "zero_passes": false
       },
       {
-        "month": "2011-01-01 00:00:00",
+        "month": "2009-01-01 00:00:00",
         "amihud_spearman": -0.9151515151515152,
-        "zero_spearman": -0.5878787878787878,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2011-02-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.35757575757575755,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.1111111111111111,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2011-03-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.7454545454545454,
+        "zero_spearman": -0.7575757575757575,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2011-04-01 00:00:00",
+        "month": "2009-02-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.2606060606060606,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-03-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.32121212121212117,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-04-01 00:00:00",
         "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.12727272727272726,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-05-01 00:00:00",
+        "amihud_spearman": -0.7575757575757575,
+        "zero_spearman": -0.7333333333333332,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.1111111111111111,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-06-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.5878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-07-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.2727272727272727,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-08-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-09-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.3939393939393939,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-10-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.41818181818181815,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2009-11-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.6606060606060605,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2011-05-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
+        "month": "2009-12-01 00:00:00",
+        "amihud_spearman": -0.9757575757575757,
+        "zero_spearman": -0.6969696969696969,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-01-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.006060606060606061,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-02-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": 0.23636363636363633,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-03-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
         "zero_spearman": -0.23636363636363633,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
@@ -732,18 +606,144 @@
         "zero_passes": false
       },
       {
-        "month": "2011-06-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.33333333333333326,
+        "month": "2010-04-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-05-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.2727272727272727,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2010-06-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.16363636363636364,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-07-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.18787878787878787,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-08-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-09-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-10-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.18787878787878787,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-11-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.24848484848484845,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2010-12-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.1515151515151515,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-01-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.22424242424242422,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-02-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.12727272727272726,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-03-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.6484848484848483,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-04-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.006060606060606061,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-05-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2011-06-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.2606060606060606,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2011-07-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.2121212121212121,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.1515151515151515,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -751,35 +751,35 @@
       },
       {
         "month": "2011-08-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.09090909090909088,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.006060606060606061,
         "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2011-09-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.22424242424242422,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2011-10-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.2606060606060606,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.8060606060606059,
+        "zero_spearman": -0.19999999999999998,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2011-11-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.16363636363636364,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -787,53 +787,53 @@
       },
       {
         "month": "2011-12-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.406060606060606,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2012-01-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.6242424242424242,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2012-02-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.17575757575757575,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2012-03-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.4787878787878787,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2012-04-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.24848484848484845,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.32121212121212117,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2012-01-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.6,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2012-02-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.13939393939393938,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2012-03-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.38181818181818183,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2012-04-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.04242424242424241,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2012-05-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.32121212121212117,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.4545454545454545,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
@@ -841,16 +841,16 @@
       },
       {
         "month": "2012-06-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.6727272727272726,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.4545454545454545,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2012-07-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
+        "amihud_spearman": -0.8666666666666665,
         "zero_spearman": -0.24848484848484845,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
@@ -859,26 +859,26 @@
       },
       {
         "month": "2012-08-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.1515151515151515,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.13939393939393938,
         "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2012-09-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2012-10-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.13939393939393938,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -886,61 +886,25 @@
       },
       {
         "month": "2012-11-01 00:00:00",
-        "amihud_spearman": -0.8666666666666665,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2012-12-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.05454545454545454,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.06666666666666665,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2013-01-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.24848484848484845,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2013-02-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.309090909090909,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2013-03-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": -0.04242424242424241,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2013-04-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.24848484848484845,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.3333333333333333,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2013-05-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
+        "amihud_spearman": -0.8909090909090909,
         "zero_spearman": -0.16363636363636364,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.3333333333333333,
@@ -948,19 +912,55 @@
         "zero_passes": false
       },
       {
-        "month": "2013-06-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.1515151515151515,
+        "month": "2013-02-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.4545454545454545,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2013-03-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2013-04-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.2121212121212121,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2013-05-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2013-07-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.17575757575757575,
+        "month": "2013-06-01 00:00:00",
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.2121212121212121,
         "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2013-07-01 00:00:00",
+        "amihud_spearman": -0.7818181818181817,
+        "zero_spearman": -0.24848484848484845,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
@@ -976,26 +976,26 @@
       },
       {
         "month": "2013-09-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.7696969696969697,
+        "zero_spearman": -0.22424242424242422,
+        "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2013-10-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.7818181818181817,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2013-11-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.1515151515151515,
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -1003,35 +1003,35 @@
       },
       {
         "month": "2013-12-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
-        "zero_spearman": -0.2121212121212121,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.1580554413568168,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-01-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2014-02-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.13939393939393938,
-        "amihud_pct_increasing": 0.2222222222222222,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2014-02-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.11515151515151514,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2014-03-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.07878787878787878,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -1039,17 +1039,17 @@
       },
       {
         "month": "2014-04-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.2727272727272727,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.32121212121212117,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.3333333333333333,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-05-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": -0.1515151515151515,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.16363636363636364,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -1057,35 +1057,35 @@
       },
       {
         "month": "2014-06-01 00:00:00",
-        "amihud_spearman": -0.8303030303030302,
-        "zero_spearman": -0.06666666666666665,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-07-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.2727272727272727,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.23636363636363633,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.1111111111111111,
+        "zero_pct_increasing": 0.2222222222222222,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-08-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.22424242424242422,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.16363636363636364,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-09-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.09118583155200968,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.006060606060606061,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -1093,17 +1093,17 @@
       },
       {
         "month": "2014-10-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.006079055436800646,
+        "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2014-11-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.10303030303030303,
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": 0.01818181818181818,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
@@ -1111,26 +1111,26 @@
       },
       {
         "month": "2014-12-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": -0.04242424242424241,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2015-01-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.07878787878787878,
+        "amihud_spearman": -0.8909090909090909,
+        "zero_spearman": -0.09090909090909088,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2015-01-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2015-02-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.09090909090909088,
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.05454545454545454,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
@@ -1138,17 +1138,17 @@
       },
       {
         "month": "2015-03-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.18787878787878787,
+        "amihud_spearman": -0.8303030303030302,
+        "zero_spearman": -0.10303030303030303,
         "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2015-04-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": 0.1515151515151515,
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": 0.10942299786241164,
         "amihud_pct_increasing": 0.2222222222222222,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
@@ -1156,88 +1156,34 @@
       },
       {
         "month": "2015-05-01 00:00:00",
-        "amihud_spearman": -0.8303030303030302,
-        "zero_spearman": -0.06666666666666665,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.006060606060606061,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2015-06-01 00:00:00",
-        "amihud_spearman": -0.8303030303030302,
-        "zero_spearman": -0.05454545454545454,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.12727272727272726,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2015-07-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.06666666666666665,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": 0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2015-08-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.09090909090909088,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2015-09-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2015-10-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2015-11-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2015-12-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-01-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-02-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
+        "amihud_spearman": -0.8787878787878788,
         "zero_spearman": -0.12727272727272726,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.4444444444444444,
@@ -1245,17 +1191,8 @@
         "zero_passes": false
       },
       {
-        "month": "2016-03-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": -0.06666666666666665,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-04-01 00:00:00",
-        "amihud_spearman": -0.9030303030303028,
+        "month": "2015-09-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
         "zero_spearman": -0.04242424242424241,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.4444444444444444,
@@ -1263,682 +1200,25 @@
         "zero_passes": false
       },
       {
-        "month": "2016-05-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": -0.09090909090909088,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-06-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-07-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-08-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-09-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-10-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-11-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2016-12-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-01-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-02-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.2606060606060606,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-03-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-04-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-05-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-06-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-07-01 00:00:00",
-        "amihud_spearman": -0.8666666666666665,
-        "zero_spearman": -0.12727272727272726,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-08-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-09-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-10-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.05454545454545454,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2017-11-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.11515151515151514,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.7777777777777778,
-        "amihud_passes": false,
-        "zero_passes": true
-      },
-      {
-        "month": "2017-12-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-01-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-02-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-03-01 00:00:00",
-        "amihud_spearman": -0.7212121212121211,
+        "month": "2015-10-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
         "zero_spearman": 0.05454545454545454,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-04-01 00:00:00",
-        "amihud_spearman": -0.8303030303030302,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-05-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-06-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-07-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-08-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-09-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": -0.10303030303030303,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2018-10-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-11-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2018-12-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-01-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-02-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": -0.01818181818181818,
-        "amihud_pct_increasing": 0.1111111111111111,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-03-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-04-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-05-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-06-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-07-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-08-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-09-01 00:00:00",
-        "amihud_spearman": -0.6606060606060605,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-10-01 00:00:00",
-        "amihud_spearman": -0.7454545454545454,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-11-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2019-12-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-01-01 00:00:00",
-        "amihud_spearman": -0.7454545454545454,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-02-01 00:00:00",
-        "amihud_spearman": -0.6242424242424242,
-        "zero_spearman": 0.4666666666666666,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.4444444444444444,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-03-01 00:00:00",
-        "amihud_spearman": -0.6484848484848483,
-        "zero_spearman": 0.4185110693297313,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-04-01 00:00:00",
-        "amihud_spearman": -0.7212121212121211,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-05-01 00:00:00",
-        "amihud_spearman": -0.6606060606060605,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-06-01 00:00:00",
-        "amihud_spearman": -0.6484848484848483,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.5555555555555556,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-07-01 00:00:00",
-        "amihud_spearman": -0.6484848484848483,
-        "zero_spearman": -0.0303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-08-01 00:00:00",
-        "amihud_spearman": -0.6363636363636362,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.5555555555555556,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-09-01 00:00:00",
-        "amihud_spearman": -0.7333333333333332,
-        "zero_spearman": 0.06666666666666665,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-10-01 00:00:00",
-        "amihud_spearman": -0.6606060606060605,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-11-01 00:00:00",
-        "amihud_spearman": -0.6242424242424242,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2020-12-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-01-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.09090909090909088,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-02-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-03-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-04-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.09090909090909088,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-05-01 00:00:00",
-        "amihud_spearman": -0.6484848484848483,
-        "zero_spearman": 0.09090909090909088,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-06-01 00:00:00",
-        "amihud_spearman": -0.6484848484848483,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-07-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": 0.006060606060606061,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-08-01 00:00:00",
-        "amihud_spearman": -0.6727272727272726,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.2222222222222222,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-09-01 00:00:00",
-        "amihud_spearman": -0.7696969696969697,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-10-01 00:00:00",
-        "amihud_spearman": -0.7939393939393938,
-        "zero_spearman": 0.09090909090909088,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-11-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2021-12-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-01-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-02-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": -0.006060606060606061,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-03-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-04-01 00:00:00",
+        "month": "2015-11-01 00:00:00",
         "amihud_spearman": -0.8787878787878788,
-        "zero_spearman": 0.17575757575757575,
+        "zero_spearman": 0.01823716631040194,
         "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2022-05-01 00:00:00",
-        "amihud_spearman": -0.8303030303030302,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-06-01 00:00:00",
-        "amihud_spearman": -0.7575757575757575,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-07-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2022-08-01 00:00:00",
+        "month": "2015-12-01 00:00:00",
         "amihud_spearman": -0.9151515151515152,
         "zero_spearman": 0.07878787878787878,
         "amihud_pct_increasing": 0.3333333333333333,
@@ -1947,45 +1227,765 @@
         "zero_passes": false
       },
       {
-        "month": "2022-09-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.11515151515151514,
+        "month": "2016-01-01 00:00:00",
+        "amihud_spearman": -0.8303030303030302,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-02-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.11515151515151514,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-03-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-04-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.05454545454545454,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-05-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.12727272727272726,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-06-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.06666666666666665,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-07-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": 0.09118583155200968,
         "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-08-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-09-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-10-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-11-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2016-12-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-01-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-02-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.18787878787878787,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-03-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-04-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": 0.06666666666666665,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-05-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-06-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-07-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.006060606060606061,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-08-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-09-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-10-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-11-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2017-12-01 00:00:00",
+        "amihud_spearman": -0.9030303030303028,
+        "zero_spearman": 0.06666666666666665,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-01-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-02-01 00:00:00",
+        "amihud_spearman": -0.9515151515151514,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-03-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-04-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-05-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-06-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-07-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-08-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-09-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-10-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-11-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2018-12-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-01-01 00:00:00",
+        "amihud_spearman": -0.7575757575757575,
+        "zero_spearman": -0.10303030303030303,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-02-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-03-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.06666666666666665,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-04-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-05-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-06-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-07-01 00:00:00",
+        "amihud_spearman": -0.8181818181818182,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-08-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": -0.12727272727272726,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-09-01 00:00:00",
+        "amihud_spearman": -0.8181818181818182,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-10-01 00:00:00",
+        "amihud_spearman": -0.8181818181818182,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-11-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.006060606060606061,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2019-12-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-01-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": -0.01818181818181818,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-02-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": 0.23636363636363633,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-03-01 00:00:00",
+        "amihud_spearman": -0.7454545454545454,
+        "zero_spearman": -0.18787878787878787,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-04-01 00:00:00",
+        "amihud_spearman": -0.8303030303030302,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-05-01 00:00:00",
+        "amihud_spearman": -0.8666666666666665,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-06-01 00:00:00",
+        "amihud_spearman": -0.7696969696969697,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-07-01 00:00:00",
+        "amihud_spearman": -0.7696969696969697,
+        "zero_spearman": -0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-08-01 00:00:00",
+        "amihud_spearman": -0.7696969696969697,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-09-01 00:00:00",
+        "amihud_spearman": -0.7696969696969697,
+        "zero_spearman": -0.0303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-10-01 00:00:00",
+        "amihud_spearman": -0.709090909090909,
+        "zero_spearman": 0.06666666666666665,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-11-01 00:00:00",
+        "amihud_spearman": -0.7454545454545454,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2020-12-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.2222222222222222,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-01-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": 0.09726488698881033,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-02-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-03-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-04-01 00:00:00",
+        "amihud_spearman": -0.8545454545454544,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-05-01 00:00:00",
+        "amihud_spearman": -0.8424242424242423,
+        "zero_spearman": 0.10303030303030303,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-06-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": -0.05454545454545454,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-07-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.006060606060606061,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-08-01 00:00:00",
+        "amihud_spearman": -0.8181818181818182,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-09-01 00:00:00",
+        "amihud_spearman": -0.8424242424242423,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-10-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-11-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.006060606060606061,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2021-12-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-01-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.11515151515151514,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.7777777777777778,
+        "amihud_passes": false,
+        "zero_passes": true
+      },
+      {
+        "month": "2022-02-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-03-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-04-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.18787878787878787,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-05-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-06-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-07-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-08-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2022-09-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.19999999999999998,
+        "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.7777777777777778,
         "amihud_passes": false,
         "zero_passes": true
       },
       {
         "month": "2022-10-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2022-11-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.12727272727272726,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.2727272727272727,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.7777777777777778,
+        "amihud_passes": false,
+        "zero_passes": true
+      },
+      {
+        "month": "2022-12-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.29696969696969694,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
-        "month": "2022-12-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.18787878787878787,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
         "month": "2023-01-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.09090909090909088,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.06666666666666665,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
@@ -1993,52 +1993,25 @@
       },
       {
         "month": "2023-02-01 00:00:00",
-        "amihud_spearman": -0.7818181818181817,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2023-03-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.11515151515151514,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.7777777777777778,
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.09090909090909088,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
-        "zero_passes": true
+        "zero_passes": false
       },
       {
         "month": "2023-04-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.10303030303030303,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2023-05-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.07878787878787878,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2023-06-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.16363636363636364,
-        "amihud_pct_increasing": 0.4444444444444444,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2023-07-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
+        "amihud_spearman": -0.9030303030303028,
         "zero_spearman": 0.24848484848484845,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.5555555555555556,
@@ -2046,8 +2019,35 @@
         "zero_passes": false
       },
       {
+        "month": "2023-05-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.07878787878787878,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2023-06-01 00:00:00",
+        "amihud_spearman": -0.9151515151515152,
+        "zero_spearman": 0.19999999999999998,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.7777777777777778,
+        "amihud_passes": false,
+        "zero_passes": true
+      },
+      {
+        "month": "2023-07-01 00:00:00",
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": 0.29696969696969694,
+        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2023-08-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
+        "amihud_spearman": -0.9272727272727272,
         "zero_spearman": 0.23636363636363633,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
@@ -2056,8 +2056,8 @@
       },
       {
         "month": "2023-09-01 00:00:00",
-        "amihud_spearman": -0.8060606060606059,
-        "zero_spearman": 0.29696969696969694,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.32121212121212117,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
@@ -2065,16 +2065,16 @@
       },
       {
         "month": "2023-10-01 00:00:00",
-        "amihud_spearman": -0.8181818181818182,
-        "zero_spearman": 0.13939393939393938,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.18787878787878787,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2023-11-01 00:00:00",
-        "amihud_spearman": -0.8787878787878788,
+        "amihud_spearman": -0.9272727272727272,
         "zero_spearman": 0.3696969696969697,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
@@ -2083,9 +2083,9 @@
       },
       {
         "month": "2023-12-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.04242424242424241,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.23636363636363633,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
@@ -2093,34 +2093,34 @@
       {
         "month": "2024-01-01 00:00:00",
         "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.22424242424242422,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "zero_spearman": 0.28484848484848485,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-02-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.18787878787878787,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.2606060606060606,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-03-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.5471149893120582,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.6242424242424242,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.7777777777777778,
         "amihud_passes": false,
-        "zero_passes": false
+        "zero_passes": true
       },
       {
         "month": "2024-04-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": 0.4666666666666666,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.43030303030303024,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
@@ -2128,73 +2128,73 @@
       },
       {
         "month": "2024-05-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.29696969696969694,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.3696969696969697,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.6666666666666666,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-06-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": 0.34545454545454546,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.2857156055296304,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-07-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": 0.5515151515151515,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2024-08-01 00:00:00",
-        "amihud_spearman": -0.8909090909090909,
-        "zero_spearman": -0.05454545454545454,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
-        "amihud_passes": false,
-        "zero_passes": false
-      },
-      {
-        "month": "2024-09-01 00:00:00",
-        "amihud_spearman": -0.8424242424242423,
-        "zero_spearman": 0.11515151515151514,
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.4666666666666666,
         "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
+        "month": "2024-08-01 00:00:00",
+        "amihud_spearman": -0.9272727272727272,
+        "zero_spearman": 0.04863244349440517,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.5555555555555556,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
+        "month": "2024-09-01 00:00:00",
+        "amihud_spearman": -0.8787878787878788,
+        "zero_spearman": 0.05454545454545454,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.4444444444444444,
+        "amihud_passes": false,
+        "zero_passes": false
+      },
+      {
         "month": "2024-10-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.6484848484848483,
-        "amihud_pct_increasing": 0.3333333333333333,
+        "amihud_spearman": -0.8424242424242423,
+        "zero_spearman": 0.7818181818181817,
+        "amihud_pct_increasing": 0.4444444444444444,
         "zero_pct_increasing": 0.5555555555555556,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-11-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
+        "amihud_spearman": -0.8424242424242423,
         "zero_spearman": -0.06666666666666665,
-        "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.6666666666666666,
+        "amihud_pct_increasing": 0.4444444444444444,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       },
       {
         "month": "2024-12-01 00:00:00",
-        "amihud_spearman": -0.8545454545454544,
-        "zero_spearman": 0.18787878787878787,
+        "amihud_spearman": -0.9393939393939393,
+        "zero_spearman": 0.1515151515151515,
         "amihud_pct_increasing": 0.3333333333333333,
-        "zero_pct_increasing": 0.5555555555555556,
+        "zero_pct_increasing": 0.4444444444444444,
         "amihud_passes": false,
         "zero_passes": false
       }
@@ -2203,38 +2203,38 @@
   "weights_stability": {
     "2005-2012": {
       "weights": {
-        "AMIHUD": 0.4964946311300406,
-        "HL_RANGE": -0.026195457176107162,
-        "LOT": 0.5038176807190647,
-        "ROLL_SPREAD": 0.02490977694570122,
-        "VOLUME_ILLIQ": 0.49306222008542416,
-        "ZERO_RATIO": 0.5052165615003036
+        "AMIHUD": 0.04427735170986033,
+        "HL_RANGE": -0.2620687158086153,
+        "LOT": 0.6907591171158163,
+        "ROLL_SPREAD": -0.09859507180607922,
+        "VOLUME_ILLIQ": 0.07061870667992853,
+        "ZERO_RATIO": 0.6614403650547579
       },
-      "variance_explained": 0.2833468663676454,
+      "variance_explained": 0.275886189232134,
       "n_obs": 25084
     },
     "2013-2018": {
       "weights": {
-        "AMIHUD": 0.4066469006919365,
-        "HL_RANGE": 0.05218214939755883,
-        "LOT": 0.5991531269693765,
-        "ROLL_SPREAD": -0.04739067266122625,
-        "VOLUME_ILLIQ": 0.2827023425483736,
-        "ZERO_RATIO": 0.6251114792955647
+        "AMIHUD": 0.2744696985757069,
+        "HL_RANGE": -0.06537720465283486,
+        "LOT": 0.6627901082489331,
+        "ROLL_SPREAD": -0.04115674268178683,
+        "VOLUME_ILLIQ": 0.2545708480152581,
+        "ZERO_RATIO": 0.6438953983028045
       },
-      "variance_explained": 0.27525671329128687,
+      "variance_explained": 0.26558032722647035,
       "n_obs": 24592
     },
     "2019-2024": {
       "weights": {
-        "AMIHUD": 0.20596830966602683,
-        "HL_RANGE": 0.30695875762727765,
-        "LOT": 0.6269867250639889,
-        "ROLL_SPREAD": -0.0863786667529862,
-        "VOLUME_ILLIQ": -0.010747050574006656,
-        "ZERO_RATIO": 0.6801942736870905
+        "AMIHUD": 0.2758884176256726,
+        "HL_RANGE": 0.36359974989848864,
+        "LOT": 0.6020132457909001,
+        "ROLL_SPREAD": -0.023340274917272225,
+        "VOLUME_ILLIQ": 0.03777680890375951,
+        "ZERO_RATIO": 0.6536734651658274
       },
-      "variance_explained": 0.3060501289930544,
+      "variance_explained": 0.330469641065725,
       "n_obs": 30872
     }
   }
