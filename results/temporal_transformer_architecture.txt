@@ -1,0 +1,34 @@
+Model: Temporal Transformer
+Slug: temporal_transformer
+Input shape: (30, 17)
+Training config: Adam(lr=0.001), loss=mse, epochs=50, batch_size=32, early_stopping_patience=10
+
+Keras summary:
+Model: "temporal_transformer"
++--------------------------------------------------------------------------+
+| Layer (type)        | Output Shape      |    Param # | Connected to      |
+|---------------------+-------------------+------------+-------------------|
+| input_layer         | (None, 30, 17)    |          0 | -                 |
+| (InputLayer)        |                   |            |                   |
+|---------------------+-------------------+------------+-------------------|
+| multi_head_attenti… | (None, 30, 17)    |      4,561 | input_layer[0][0… |
+| (MultiHeadAttentio… |                   |            | input_layer[0][0] |
+|---------------------+-------------------+------------+-------------------|
+| add (Add)           | (None, 30, 17)    |          0 | input_layer[0][0… |
+|                     |                   |            | multi_head_atten… |
+|---------------------+-------------------+------------+-------------------|
+| attention_layer_no… | (None, 30, 17)    |         34 | add[0][0]         |
+| (LayerNormalizatio… |                   |            |                   |
+|---------------------+-------------------+------------+-------------------|
+| feed_forward        | (None, 30, 64)    |      1,152 | attention_layer_… |
+| (Dense)             |                   |            |                   |
+|---------------------+-------------------+------------+-------------------|
+| global_average_poo… | (None, 64)        |          0 | feed_forward[0][… |
+| (GlobalAveragePool… |                   |            |                   |
+|---------------------+-------------------+------------+-------------------|
+| dense (Dense)       | (None, 1)         |         65 | global_average_p… |
++--------------------------------------------------------------------------+
+ Total params: 5,812 (22.70 KB)
+ Trainable params: 5,812 (22.70 KB)
+ Non-trainable params: 0 (0.00 B)
+

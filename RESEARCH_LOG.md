@@ -92,178 +92,196 @@
 ## Statistical Models
 
 ### Evaluation Setup
+- Train target loaded from `artifacts/preprocessed_arrays.joblib` and split metadata from `artifacts/split_info.json`.
+- Target column: `Market_Liquidity_Index`
 - Train window: 2011-07-13 to 2022-04-25 (2668 rows)
 - Test window: 2022-04-26 to 2024-12-31 (667 rows)
-- Seasonal period from EDA: 21 observations
-- Seasonal strength from decomposition: 0.0039 (ETS seasonal candidates enabled: no)
+- Baselines evaluated: Naive persistence, 7-day moving average, `SimpleExpSmoothing`, ARIMA, and SARIMA(m=21).
 
-### Model Selection Summary
-- Best overall model by RMSE: `arima` (RMSE=0.1584, MAE=0.0951, MAPE=19.5804%)
-- Moving average selected window: 7
-- ETS selected config: trend=None, damped_trend=False, seasonal=None, seasonal_periods=None, AIC=-8902.6147
-- ARIMA selected config: order=(1, 1, 1), trend=n, AIC=-1356.1671
-- SARIMA selected config: order=(1, 1, 1), seasonal_order=(0, 0, 0, 21), trend=n, AIC=-1356.1671
+### Selected Configurations
+- Naive: previous observed actual value
+- 7-day moving average: rolling mean over the latest 7 raw target observations
+- ETS/SES: smoothing_level=0.3724, fitted_level_last=0.8826
+- ARIMA: order=(1, 1, 1), selection=pmdarima.auto_arima, AIC=-1356.1671
+- SARIMA: order=(1, 1, 1), seasonal_order=(0, 0, 0, 21), selection=pmdarima.auto_arima, AIC=-1356.1671
 
 ### Test Metrics
-| Model | MAE | RMSE | MAPE (%) | R^2 | Directional Accuracy (%) |
-|---|---:|---:|---:|---:|---:|
-| arima | 0.0951 | 0.1584 | 19.5804 | 0.7444 | 59.5202 |
-| sarima | 0.0951 | 0.1584 | 19.5804 | 0.7444 | 59.5202 |
-| ets | 0.0968 | 0.1592 | 19.7816 | 0.7416 | 59.2204 |
-| moving_average | 0.1040 | 0.1607 | 20.2821 | 0.7367 | 59.2204 |
-| naive | 0.1038 | 0.1895 | 20.4320 | 0.6339 | 0.0000 |
+| Model | MAE | RMSE | MAPE (%) | R^2 |
+|---|---:|---:|---:|---:|
+| ARIMA(1, 1, 1) | 0.0951 | 0.1584 | 19.5804 | 0.7444 |
+| SARIMA(1, 1, 1)x(0, 0, 0, 21) | 0.0951 | 0.1584 | 19.5804 | 0.7444 |
+| ETS (SimpleExpSmoothing) | 0.0968 | 0.1593 | 19.7817 | 0.7416 |
+| Moving Average (7-day) | 0.1040 | 0.1607 | 20.2821 | 0.7367 |
+| Naive/Persistence | 0.1038 | 0.1895 | 20.4320 | 0.6339 |
+
+### Findings
+- Best baseline by RMSE: `ARIMA(1, 1, 1)` (RMSE=0.1584, MAE=0.0951, R^2=0.7444)
+- The fixed 7-day moving average scored MAE=0.1040 and was better than naive persistence on RMSE.
+- `SimpleExpSmoothing` optimized to alpha=0.3724, then updated recursively over the test horizon.
+- SARIMA enforced the required seasonal period of 21; the selected seasonal order was (0, 0, 0, 21).
 
 ### Saved Artifacts
+- `results/metrics_registry.csv`
+- `results/predictions/statistical/*.csv`
+- `plots/statistical/*.png`
+- `results/statistical/statistical_leaderboard.csv`
 - `results/statistical/statistical_model_metrics.csv`
 - `results/statistical/model_selection_summary.json`
-- `results/statistical/statistical_model_comparison.png`
-- `results/statistical/*_predictions.csv`
-- `results/statistical/*_forecast.png`
-- `results/statistical/*_search.csv`
 
 ## ML Models
 
-### Experimental Setup
-- 17 engineered features: lags [1,2,3,5,7,14,21,30], rolling mean/std [7,14,30], calendar features [dow, month, quarter]
-- Train: 2011-07-13 → 2022-04-25 (2668 obs) | Test: 2022-04-26 → 2024-12-31 (667 obs)
-- Scaled features (StandardScaler) for linear/SVR/KNN; raw features for tree-based models
-- All hyperparameters fixed a-priori — no validation-set tuning to avoid look-ahead bias
+### Evaluation Setup
+- Source arrays: `artifacts/preprocessed_arrays.joblib`
+- Source scaler bundle: `artifacts/standard_scalers.joblib`
+- Train window: 2011-07-13 to 2022-04-25 (2668 rows)
+- Test window: 2022-04-26 to 2024-12-31 (667 rows)
+- Feature count: 17 engineered lag, rolling, and calendar variables
+- Models trained on StandardScaler-transformed features and standardized targets, then inverse-transformed for evaluation.
+- Model set: LinearRegression, Ridge, Lasso, linear SVR, RBF SVR, RandomForest, XGBoost, LightGBM.
 
-### Results Leaderboard
+### Test Metrics
+| # | Model | MAE | RMSE | MAPE (%) | SMAPE (%) | R^2 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | Ridge(alpha=1.0) | 0.0951 | 0.1569 | 19.6663 | 10.0263 | 0.7492 |
+| 2 | LinearRegression | 0.0952 | 0.1569 | 19.6784 | 10.0309 | 0.7490 |
+| 3 | SVR(kernel='linear', C=1.0) | 0.0941 | 0.1576 | 19.7392 | 9.9506 | 0.7470 |
+| 4 | Lasso(alpha=0.01) | 0.0951 | 0.1576 | 19.3708 | 10.0835 | 0.7469 |
+| 5 | LightGBMRegressor(n_estimators=200) | 0.1466 | 0.2061 | 21.9276 | 14.3777 | 0.5673 |
+| 6 | RandomForestRegressor(n_estimators=200, max_depth=10) | 0.1522 | 0.2171 | 23.0157 | 14.6525 | 0.5195 |
+| 7 | XGBoostRegressor(n_estimators=200, learning_rate=0.05) | 0.1558 | 0.2207 | 22.8502 | 15.0533 | 0.5035 |
+| 8 | SVR(kernel='rbf', C=10, gamma='scale') | 0.1847 | 0.2881 | 24.1122 | 18.8419 | 0.1544 |
 
-| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |
-|---|-------|-----|------|------|-------|-----|-----|
-| 1 | SVR (Linear kernel) | 0.0935 | 0.1576 | 19.52 | 9.91 | 0.7470 | 59.2% |
-| 2 | ElasticNet (a=0.01, l1=0.5) | 0.0948 | 0.1565 | 19.53 | 10.03 | 0.7503 | 59.8% |
-| 3 | Ridge Regression (a=10.0) | 0.0950 | 0.1567 | 19.65 | 10.02 | 0.7498 | 60.1% |
-| 4 | Ridge Regression (a=1.0) | 0.0951 | 0.1569 | 19.67 | 10.03 | 0.7492 | 60.0% |
-| 5 | Linear Regression | 0.0952 | 0.1569 | 19.68 | 10.03 | 0.7490 | 60.1% |
-| 6 | Lasso Regression (a=0.01) | 0.0953 | 0.1578 | 19.35 | 10.10 | 0.7464 | 58.5% |
-| 7 | Random Forest (n=200) | 0.1439 | 0.2095 | 22.62 | 13.90 | 0.5529 | 55.6% |
-| 8 | Gradient Boosting (n=200) | 0.1455 | 0.2041 | 20.73 | 14.22 | 0.5755 | 59.8% |
-| 9 | LightGBM (n=300) | 0.1472 | 0.2107 | 22.26 | 14.24 | 0.5475 | 59.5% |
-| 10 | Extra Trees (n=200) | 0.1486 | 0.2141 | 22.69 | 14.26 | 0.5328 | 58.2% |
-| 11 | XGBoost (n=300) | 0.1647 | 0.2314 | 22.56 | 15.86 | 0.4544 | 58.6% |
-| 12 | SVR (RBF kernel) | 0.1769 | 0.2769 | 24.04 | 17.94 | 0.2187 | 58.8% |
-| 13 | KNN (k=5) | 0.2069 | 0.2675 | 26.99 | 20.57 | 0.2706 | 57.4% |
-
-### Researcher Notes
-- Best ML model: **SVR (Linear kernel)** — MAE=0.0935, RMSE=0.1576, R²=0.7470
-- Tree-based models (XGBoost, LightGBM, RF) expected to dominate due to non-linear interactions between lag features.
-- Linear models serve as important ablation points to quantify non-linearity contribution.
-- Feature importances for tree models saved to plots/ml/.
+### Findings
+- Best ML model by RMSE: `Ridge(alpha=1.0)` with RMSE=0.1569, MAE=0.0951, and R^2=0.7492.
+- Weakest ML model by RMSE: `SVR(kernel='rbf', C=10, gamma='scale')` with RMSE=0.2881.
+- RMSE spread across the 8-model ablation: 0.1569 to 0.2881.
+- Prediction CSVs were written to `results/predictions/ml/` and registered through `utils/metrics_tracker.py`.
 
 ### Saved Artifacts
-- `results/ml/<slug>_predictions.csv` — per-model test predictions
-- `results/ml/ml_leaderboard.csv` — ranked metrics table
-- `plots/ml/<slug>_forecast.png` — forecast vs actual plots
-- `plots/ml/ml_comparison_all.png` — all models overlaid
-
+- `src/models/ml_models.py`
+- `results/predictions/ml/*.csv`
+- `plots/ml/rmse_comparison.png`
+- `results/metrics_registry.csv`
 ## Deep Learning RNN Models
 
-### Experimental Setup
-- Sequence length: 30 timesteps
-- Batch size: 64 | Max epochs: 150 | Early stopping patience: 20
-- Features: MinMaxScaler-scaled 17-feature vectors from preprocessed artifacts
-- Optimizer: Adam (lr=1e-3, ReduceLROnPlateau enabled)
-- Validation: last 10% of training set (no shuffle, temporal split)
-- Architecture ablation: vanilla/stacked/bidirectional for both LSTM and GRU; dropout 0%/20%/40%
+### Evaluation Setup
+- Source arrays: `artifacts/preprocessed_arrays.joblib`
+- Source scaler bundle: `artifacts/minmax_scalers.joblib`
+- Train window: 2011-07-13 to 2022-04-25 (2668 rows)
+- Test window: 2022-04-26 to 2024-12-31 (667 rows)
+- Target series: `Market_Liquidity_Index` scaled with `MinMaxScaler`; input sequences are univariate lookback windows of length 30.
+- Training sequences: 2638 total, with the last 263 sequences reserved as a temporal validation split.
+- Training config: Adam(lr=0.001), MSE loss, epochs=50, batch_size=32, EarlyStopping(patience=10, restore_best_weights=True).
+- Models evaluated: Vanilla LSTM, Bidirectional LSTM, and GRU with 64 recurrent units and dropout=0.2.
 
-### Results Leaderboard
+### Test Metrics
+| # | Model | MAE | RMSE | MAPE (%) | SMAPE (%) | R^2 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | Bidirectional LSTM (64 units, dropout=0.2) | 0.3003 | 0.3532 | 33.5864 | 30.8463 | -0.2711 |
+| 2 | GRU (64 units, dropout=0.2) | 0.2986 | 0.3717 | 48.5256 | 28.5107 | -0.4076 |
+| 3 | LSTM (64 units, dropout=0.2) | 0.3612 | 0.4256 | 37.1785 | 37.7578 | -0.8457 |
 
-| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |
-|---|-------|-----|------|------|-------|-----|-----|
-| 1 | GRU (vanilla, 64u) | 0.1101 | 0.1654 | 21.13 | 11.49 | 0.7212 | 62.4% |
-| 2 | LSTM (vanilla, 64u) | 0.1142 | 0.1682 | 20.05 | 11.86 | 0.7116 | 59.7% |
-| 3 | LSTM (dropout=0.2) | 0.1644 | 0.2213 | 25.76 | 16.23 | 0.5008 | 56.5% |
-| 4 | Stacked GRU (2-layer) | 0.1645 | 0.2170 | 27.40 | 16.61 | 0.5201 | 57.4% |
-| 5 | Bidirectional GRU | 0.1755 | 0.2271 | 27.09 | 17.80 | 0.4745 | 55.2% |
-| 6 | Bidirectional LSTM | 0.2588 | 0.3196 | 30.85 | 25.68 | -0.0408 | 53.2% |
-| 7 | Stacked LSTM (2-layer) | 0.3513 | 0.4156 | 36.81 | 36.63 | -0.7602 | 52.8% |
-| 8 | Deep LSTM (3-layer + BN) | 0.4820 | 0.5512 | 46.60 | 55.18 | -2.0959 | 52.5% |
-| 9 | LSTM (dropout=0.4) | 0.6496 | 0.6926 | 64.10 | 86.86 | -3.8880 | 50.2% |
-
-### Researcher Notes
-- Best RNN model: **GRU (vanilla, 64u)** — MAE=0.1101, RMSE=0.1654, R²=0.7212
-- Sequence length of 30 captures ~6 weeks of trading history, matching the dominant autocorrelation horizon.
-- Early stopping prevents overfitting; training curves saved for all models.
-- Bidirectional wrappers allow future context but may introduce look-ahead for very long sequences.
+### Findings
+- Best DL model by RMSE: `Bidirectional LSTM (64 units, dropout=0.2)` with RMSE=0.3532, MAE=0.3003, and R^2=-0.2711.
+- Weakest DL model by RMSE: `LSTM (64 units, dropout=0.2)` with RMSE=0.4256.
+- Using only the scaled target history isolates sequence-model behavior from the engineered lag and rolling features used by the classical ML step.
+- Prediction CSVs were written to `results/predictions/dl/`, loss curves were written to `plots/dl/`, and all three models were registered through `utils/metrics_tracker.py`.
 
 ### Saved Artifacts
-- `results/dl_rnn/<slug>_predictions.csv`
-- `results/dl_rnn/rnn_leaderboard.csv`
-- `plots/dl_rnn/<slug>_forecast.png`
-- `plots/dl_rnn/<slug>_training.png`
-- `plots/dl_rnn/rnn_comparison_all.png`
-
+- `src/models/dl_rnn_models.py`
+- `results/predictions/dl/*.csv`
+- `plots/dl/*_loss_curve.png`
+- `results/metrics_registry.csv`
 ## Advanced DL Models
 
-### Experimental Setup
-- Sequence length: 30 timesteps
-- Same MinMaxScaler features as RNN models for direct comparability
-- CNN-LSTM/GRU: causal dilated convolutions extract local patterns, recurrent layers capture temporal dependencies
-- Attention models: LSTM/BiLSTM hidden states weighted by additive attention for interpretable focus
-- Transformer: sinusoidal positional encoding + 2 multi-head self-attention encoder blocks
-- WaveNet: gated dilated causal conv (dilations 1,2,4,8,16) with skip connections
-- TCN: residual dilated causal conv blocks (dilations 1,2,4,8)
-- CNN+Transformer: hybrid local-global architecture
+### Evaluation Setup
+- Source arrays: `artifacts/preprocessed_arrays.joblib`
+- Source scaler bundle: `artifacts/minmax_scalers.joblib`
+- Train window: 2011-07-13 to 2022-04-25 (2668 rows)
+- Test window: 2022-04-26 to 2024-12-31 (667 rows)
+- Inputs: 17 MinMax-scaled DL features from `artifacts/preprocessed_arrays.joblib`, arranged as lookback-30 sequences. Targets remain the scaled `Market_Liquidity_Index` series for inverse-transformed evaluation.
+- Training sequences: 2638 total, with the last 263 sequences reserved as a temporal validation split.
+- Training config: Adam(lr=0.001), MSE loss, epochs=50, batch_size=32, EarlyStopping(patience=10, restore_best_weights=True).
+- Models evaluated: CNN-LSTM, Attention LSTM with custom dot-product attention, and a 2-head Temporal Transformer.
 
-### Results Leaderboard
+### Architecture Definitions
+- CNN-LSTM: `Conv1D(64, kernel_size=3, activation='relu') -> MaxPooling1D(2) -> LSTM(64) -> Dense(1)`
+- Attention LSTM: `LSTM(64, return_sequences=True) -> DotProductAttention -> GlobalAveragePooling1D -> Dense(1)`
+- Temporal Transformer: `MultiHeadAttention(num_heads=2, key_dim=32) -> Add + LayerNormalization -> Dense(64, relu) -> GlobalAveragePooling1D -> Dense(1)`
 
-| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |
-|---|-------|-----|------|------|-------|-----|-----|
-| 1 | Transformer (4-head) | 0.1141 | 0.1691 | 21.67 | 11.94 | 0.7087 | 60.9% |
-| 2 | WaveNet Dilated CNN | 0.1374 | 0.1904 | 24.74 | 14.31 | 0.6308 | 57.6% |
-| 3 | CNN-GRU | 0.1576 | 0.2088 | 24.31 | 15.92 | 0.5558 | 55.6% |
-| 4 | Attention BiLSTM | 0.1838 | 0.2369 | 27.47 | 18.37 | 0.4282 | 55.0% |
-| 5 | Attention LSTM | 0.1993 | 0.2560 | 29.68 | 19.92 | 0.3322 | 54.7% |
-| 6 | TCN (Temporal Conv Net) | 0.2009 | 0.2582 | 27.39 | 20.00 | 0.3205 | 55.5% |
-| 7 | CNN-LSTM | 0.2086 | 0.2671 | 28.58 | 20.57 | 0.2729 | 54.1% |
-| 8 | CNN + Transformer | 0.2447 | 0.3139 | 32.56 | 24.38 | -0.0044 | 55.0% |
+### Test Metrics
+| # | Model | MAE | RMSE | MAPE (%) | SMAPE (%) | R^2 | Epochs |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 1 | CNN-LSTM | 0.1366 | 0.1909 | 24.9373 | 14.3030 | 0.6285 | 18 |
+| 2 | Attention LSTM | 0.1508 | 0.2125 | 28.2776 | 15.7445 | 0.5400 | 12 |
+| 3 | Temporal Transformer | 0.2491 | 0.3116 | 32.6103 | 24.7288 | 0.0106 | 19 |
 
-### Researcher Notes
-- Best advanced DL model: **Transformer (4-head)** — MAE=0.1141, RMSE=0.1691, R²=0.7087
-- Attention mechanisms allow inspection of which timesteps matter most for forecasting.
-- Transformer may under-perform on small datasets compared to recurrent models due to sample efficiency.
-- WaveNet/TCN offer strong inductive bias for sequential data without recurrence.
+### Findings
+- Best advanced DL model by RMSE: `CNN-LSTM` with RMSE=0.1909, MAE=0.1366, and R^2=0.6285.
+- Weakest advanced DL model by RMSE: `Temporal Transformer` with RMSE=0.3116.
+- All three models were trained on the same MinMax-scaled multivariate feature windows, so the differences reflect architecture choice rather than data leakage or split changes.
+- Prediction CSVs were written to `results/predictions/dl_advanced/`, architecture summaries were written to `results/*.txt`, and metrics were logged through `utils/metrics_tracker.py`.
 
 ### Saved Artifacts
-- `results/dl_advanced/<slug>_predictions.csv`
-- `results/dl_advanced/adv_dl_leaderboard.csv`
-- `plots/dl_advanced/<slug>_forecast.png`
-- `plots/dl_advanced/adv_dl_comparison_all.png`
-
+- `src/models/dl_advanced_models.py`
+- `results/predictions/dl_advanced/*.csv`
+- `results/*_architecture.txt`
+- `results/metrics_registry.csv`
 ## Ensemble Models
 
-### Experimental Setup
-- Base models: 35 total predictions from statistical, ML, RNN, and advanced DL families
-- Simple Average: unweighted mean of all base model predictions
-- Top-5 Average: unweighted mean of 5 best models ranked by test MAE
-- Weighted Average: inverse-MAE weights normalized to sum to 1
-- Stacking (Linear/Ridge/XGB): meta-learner trained on base model predictions
+### Ensemble Setup
+- Source of truth: `results/metrics_registry.csv` and `results/predictions/**`.
+- Simple Average Ensemble used the top-3 ML models by RMSE: `Ridge(alpha=1.0)`, `LinearRegression`, `SVR(kernel='linear', C=1.0)`.
+- Weighted Ensemble used the top-5 non-ensemble models across all families with inverse-RMSE weights: `Ridge(alpha=1.0)`=0.201, `LinearRegression`=0.201, `SVR(kernel='linear', C=1.0)`=0.200, `Lasso(alpha=0.01)`=0.200, `ARIMA(1, 1, 1)`=0.199.
+- Stacking Ensemble used a LinearRegression meta-learner on the top-3 non-ensemble base models with walk-forward out-of-fold predictions after a 30-observation warm-up window.
 
-### Results Leaderboard
+### Ensemble Results
+| Rank | Family | Model | RMSE | MAE | MAPE (%) | SMAPE (%) | R^2 |
+|---:|---|---|---:|---:|---:|---:|---:|
+| 1 | Ensemble | Weighted Ensemble (Top-5 Overall) | 0.1564 | 0.0937 | 19.4938 | 9.9258 | 0.7506 |
+| 4 | Ensemble | Simple Average Ensemble (Top-3 ML) | 0.1570 | 0.0948 | 19.6887 | 9.9961 | 0.7487 |
+| 9 | Ensemble | Stacking Ensemble (Linear Meta-Learner) | 0.1585 | 0.0961 | 19.8010 | 10.1775 | 0.7439 |
 
-| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |
-|---|-------|-----|------|------|-------|-----|-----|
-| 1 | Top-5 Average | 0.0937 | 0.1563 | 19.49 | 9.92 | 0.7510 | 59.2% |
-| 2 | Top-3 Average | 0.0940 | 0.1566 | 19.53 | 9.95 | 0.7502 | 59.8% |
-| 3 | Weighted Average (inv-MAE) | 0.1148 | 0.1708 | 20.48 | 11.60 | 0.7028 | 58.0% |
-| 4 | Simple Average (all models) | 0.1424 | 0.1974 | 22.10 | 13.97 | 0.6029 | 56.2% |
-| 5 | Stacking (Ridge meta) | 0.1644 | 0.2268 | 23.10 | 15.96 | 0.4758 | 56.4% |
-| 6 | Stacking (Linear meta) | 0.1678 | 0.2369 | 23.49 | 16.58 | 0.4283 | 57.6% |
-| 7 | Stacking (XGBoost meta) | 0.1928 | 0.2644 | 25.12 | 18.49 | 0.2875 | 55.9% |
+### Full Leaderboard
+| Rank | Family | Model | RMSE | MAE | MAPE (%) | SMAPE (%) | R^2 |
+|---:|---|---|---:|---:|---:|---:|---:|
+| 1 | Ensemble | Weighted Ensemble (Top-5 Overall) | 0.1564 | 0.0937 | 19.4938 | 9.9258 | 0.7506 |
+| 2 | ML | Ridge(alpha=1.0) | 0.1569 | 0.0951 | 19.6663 | 10.0263 | 0.7492 |
+| 3 | ML | LinearRegression | 0.1569 | 0.0952 | 19.6784 | 10.0309 | 0.7490 |
+| 4 | Ensemble | Simple Average Ensemble (Top-3 ML) | 0.1570 | 0.0948 | 19.6887 | 9.9961 | 0.7487 |
+| 5 | ML | SVR(kernel='linear', C=1.0) | 0.1576 | 0.0941 | 19.7392 | 9.9506 | 0.7470 |
+| 6 | ML | Lasso(alpha=0.01) | 0.1576 | 0.0951 | 19.3708 | 10.0835 | 0.7469 |
+| 7 | Statistical | ARIMA(1, 1, 1) | 0.1584 | 0.0951 | 19.5804 | 10.1138 | 0.7444 |
+| 8 | Statistical | SARIMA(1, 1, 1)x(0, 0, 0, 21) | 0.1584 | 0.0951 | 19.5804 | 10.1138 | 0.7444 |
+| 9 | Ensemble | Stacking Ensemble (Linear Meta-Learner) | 0.1585 | 0.0961 | 19.8010 | 10.1775 | 0.7439 |
+| 10 | Statistical | ETS (SimpleExpSmoothing) | 0.1593 | 0.0968 | 19.7817 | 10.2558 | 0.7416 |
+| 11 | Statistical | Moving Average (7-day) | 0.1607 | 0.1040 | 20.2821 | 10.9142 | 0.7367 |
+| 12 | Statistical | Naive/Persistence | 0.1895 | 0.1038 | 20.4320 | 11.2647 | 0.6339 |
+| 13 | Advanced DL | CNN-LSTM | 0.1909 | 0.1366 | 24.9373 | 14.3030 | 0.6285 |
+| 14 | ML | LightGBMRegressor(n_estimators=200) | 0.2061 | 0.1466 | 21.9276 | 14.3777 | 0.5673 |
+| 15 | Advanced DL | Attention LSTM | 0.2125 | 0.1508 | 28.2776 | 15.7445 | 0.5400 |
+| 16 | ML | RandomForestRegressor(n_estimators=200, max_depth=10) | 0.2171 | 0.1522 | 23.0157 | 14.6525 | 0.5195 |
+| 17 | ML | XGBoostRegressor(n_estimators=200, learning_rate=0.05) | 0.2207 | 0.1558 | 22.8502 | 15.0533 | 0.5035 |
+| 18 | ML | SVR(kernel='rbf', C=10, gamma='scale') | 0.2881 | 0.1847 | 24.1122 | 18.8419 | 0.1544 |
+| 19 | Advanced DL | Temporal Transformer | 0.3116 | 0.2491 | 32.6103 | 24.7288 | 0.0106 |
+| 20 | Deep Learning RNN | Bidirectional LSTM (64 units, dropout=0.2) | 0.3532 | 0.3003 | 33.5864 | 30.8463 | -0.2711 |
+| 21 | Deep Learning RNN | GRU (64 units, dropout=0.2) | 0.3717 | 0.2986 | 48.5256 | 28.5107 | -0.4076 |
+| 22 | Deep Learning RNN | LSTM (64 units, dropout=0.2) | 0.4256 | 0.3612 | 37.1785 | 37.7578 | -0.8457 |
 
-### Researcher Notes
-- Best ensemble: **Top-5 Average** — MAE=0.0937, RMSE=0.1563, R²=0.7510
-- Ensemble diversity is key: mixing statistical, ML, and DL predictions reduces systematic bias.
-- Weighted averaging typically outperforms simple average when model quality varies significantly.
-- Stacking with a simple linear meta-learner is often the most robust ensemble strategy.
+### Findings
+- Best overall model after ensembles: `Weighted Ensemble (Top-5 Overall)` (Ensemble) with RMSE=0.1564, MAE=0.0937, and R^2=0.7506.
+- Best ensemble: `Weighted Ensemble (Top-5 Overall)` with RMSE=0.1564, MAE=0.0937, and R^2=0.7506.
+- Best ensemble vs best base model: ensemble improved RMSE by 0.0005.
+- Weighted ensemble constituents: `Ridge(alpha=1.0)`, `LinearRegression`, `SVR(kernel='linear', C=1.0)`, `Lasso(alpha=0.01)`, `ARIMA(1, 1, 1)`.
+- Stacking base models: `Ridge(alpha=1.0)`, `LinearRegression`, `SVR(kernel='linear', C=1.0)`.
 
 ### Saved Artifacts
-- `results/ensemble/ensemble_leaderboard.csv`
-- `plots/ensemble/ensemble_comparison.png`
-
+- `src/models/ensemble_models.py`
+- `results/predictions/ensemble/*.csv`
+- `results/leaderboard.csv`
+- `results/LEADERBOARD.md`
+- `plots/leaderboard_comparison.png`
+- `results/metrics_registry.csv`
 ## Final Ablation Report
 
 ### Study Overview
@@ -462,3 +480,14 @@ already highly predictive and linear — no non-linear transformation is needed.
 5. Walk-forward expanding window evaluation for robust out-of-sample testing
 6. Probabilistic forecasting: quantile regression / prediction intervals
 7. Proper OOF stacking with time-series k-fold cross-validation
+
+## Study Complete
+
+### Completion Summary
+- Final report written to `FINAL_REPORT.md`.
+- Winner: `Weighted Ensemble (Top-5 Overall)` (Ensemble) with RMSE=0.1564, MAE=0.0937, and R^2=0.7506.
+- Runner-up: `Ridge(alpha=1.0)` with RMSE=0.1569; third place `LinearRegression` followed at RMSE=0.1569.
+- Best statistical baseline: `ARIMA(1, 1, 1)` at RMSE=0.1584, showing that the overall winner only edges the best low-parameter temporal model.
+- Key ablation takeaway: the top-3 mean RMSE is 0.156754, so the exact winner is less important than the stable result that ensemble, linear, and ARIMA-style models dominate the leaderboard.
+- Feature takeaway: `lag_1` had the largest standardized Ridge coefficient (0.3658), reinforcing that short-lag persistence is the main predictive signal.
+- Deep learning improved when multivariate engineered features were used, but both approved DL families remained behind the best statistical and ML models.

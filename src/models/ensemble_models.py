@@ -1,424 +1,626 @@
-"""
-Ensemble & Hybrid Models — Liquidity Index Forecasting
-=======================================================
-Strategies:
-  - Simple Average Ensemble (all models)
-  - Top-K Average (best K models by validation MAE)
-  - Weighted Average (inverse-MAE weights)
-  - Stacking with Linear meta-learner
-  - Stacking with Ridge meta-learner
-  - Stacking with XGBoost meta-learner
-  - Best Statistical + Best ML + Best DL hybrid average
-Inputs:   prediction CSVs from results/{statistical,ml,dl_rnn,dl_advanced}/
-Outputs:  results/ensemble/  |  plots/ensemble/
-"""
 from __future__ import annotations
 
-import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.metrics import r2_score
-import xgboost as xgb
+from sklearn.linear_model import LinearRegression
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-RESULTS_DIR = PROJECT_ROOT / "results" / "ensemble"
-PLOTS_DIR = PROJECT_ROOT / "plots" / "ensemble"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from utils.metrics_tracker import REGISTRY_PATH, compute_metrics, load_registry, log_result
+
+
+RESULTS_ROOT = PROJECT_ROOT / "results"
+PREDICTIONS_DIR = RESULTS_ROOT / "predictions" / "ensemble"
+LEADERBOARD_CSV_PATH = RESULTS_ROOT / "leaderboard.csv"
+LEADERBOARD_MD_PATH = RESULTS_ROOT / "LEADERBOARD.md"
+PLOT_PATH = PROJECT_ROOT / "plots" / "leaderboard_comparison.png"
 RESEARCH_LOG_PATH = PROJECT_ROOT / "RESEARCH_LOG.md"
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
-MAPE_EPSILON = 1e-6
 LOG_SECTION_HEADER = "## Ensemble Models"
+STACKING_WARMUP = 30
+SORT_COLUMNS = ["RMSE", "MAE", "MAPE", "model_family", "model_name"]
+FAMILY_ORDER = ["statistical", "ml", "dl", "dl_advanced", "ensemble"]
+FAMILY_LABELS = {
+    "statistical": "Statistical",
+    "ml": "ML",
+    "dl": "Deep Learning RNN",
+    "dl_advanced": "Advanced DL",
+    "ensemble": "Ensemble",
+}
+FAMILY_COLORS = {
+    "statistical": "#4E79A7",
+    "ml": "#F28E2B",
+    "dl": "#59A14F",
+    "dl_advanced": "#E15759",
+    "ensemble": "#B07AA1",
+}
+
+SIMPLE_AVERAGE_NAME = "Simple Average Ensemble (Top-3 ML)"
+WEIGHTED_NAME = "Weighted Ensemble (Top-5 Overall)"
+STACKING_NAME = "Stacking Ensemble (Linear Meta-Learner)"
 
 
-@dataclass
-class EnsembleResult:
-    name: str
+@dataclass(frozen=True)
+class SelectedModel:
+    model_family: str
+    model_name: str
+    predictions_path: Path
+    rmse: float
+    mae: float
+    mape: float
     slug: str
-    predictions: np.ndarray
+
+
+@dataclass(frozen=True)
+class EnsembleResult:
+    model_name: str
+    slug: str
     metrics: dict[str, float]
-    weights: dict[str, float]
-    notes: str = ""
+    predictions_path: Path
 
 
 def ensure_dirs() -> None:
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
+    LEADERBOARD_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LEADERBOARD_MD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PLOT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
-def compute_metrics(actual: np.ndarray, predicted: np.ndarray, prev_actual: np.ndarray) -> dict[str, float]:
-    errors = actual - predicted
-    denom = np.clip(np.abs(actual), MAPE_EPSILON, None)
-    da = np.sign(actual - prev_actual) == np.sign(predicted - prev_actual)
-    smape = np.mean(2 * np.abs(errors) / (np.abs(actual) + np.abs(predicted) + MAPE_EPSILON)) * 100
+def sort_registry(frame: pd.DataFrame) -> pd.DataFrame:
+    return frame.sort_values(
+        SORT_COLUMNS,
+        ascending=[True] * len(SORT_COLUMNS),
+        kind="stable",
+        na_position="last",
+    ).reset_index(drop=True)
+
+
+def prune_existing_ensemble_rows() -> None:
+    if not REGISTRY_PATH.exists():
+        return
+
+    registry = load_registry()
+    filtered = registry.loc[registry["model_family"] != "ensemble"].copy()
+    filtered.to_csv(REGISTRY_PATH, index=False)
+
+
+def load_base_registry() -> pd.DataFrame:
+    registry = load_registry().copy()
+    registry = registry.loc[registry["model_family"] != "ensemble"].copy()
+    registry = registry.dropna(subset=["predictions_path"])
+    registry = sort_registry(registry)
+
+    if registry.empty:
+        raise FileNotFoundError(
+            "No base-model entries were found in results/metrics_registry.csv."
+        )
+
+    return registry
+
+
+def to_selected_models(frame: pd.DataFrame) -> list[SelectedModel]:
+    models: list[SelectedModel] = []
+    for row in frame.itertuples(index=False):
+        predictions_path = PROJECT_ROOT / str(row.predictions_path)
+        slug = predictions_path.stem.removesuffix("_predictions")
+        if not predictions_path.exists():
+            raise FileNotFoundError(f"Missing predictions file referenced by registry: {predictions_path}")
+
+        models.append(
+            SelectedModel(
+                model_family=str(row.model_family),
+                model_name=str(row.model_name),
+                predictions_path=predictions_path,
+                rmse=float(row.RMSE),
+                mae=float(row.MAE),
+                mape=float(row.MAPE),
+                slug=slug,
+            )
+        )
+    return models
+
+
+def select_top_models(
+    registry: pd.DataFrame,
+    count: int,
+    family: str | None = None,
+) -> list[SelectedModel]:
+    selected = registry.copy()
+    if family is not None:
+        selected = selected.loc[selected["model_family"] == family].copy()
+
+    selected = sort_registry(selected).head(count)
+    if len(selected) < count:
+        scope = f"family '{family}'" if family is not None else "all model families"
+        raise ValueError(f"Expected at least {count} models in {scope}, found {len(selected)}.")
+
+    return to_selected_models(selected)
+
+
+def load_prediction_frame(predictions_path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(predictions_path)
+    required_columns = {"date", "actual", "prediction"}
+    if not required_columns.issubset(frame.columns):
+        missing = ", ".join(sorted(required_columns - set(frame.columns)))
+        raise ValueError(f"{predictions_path} is missing required columns: {missing}")
+
+    loaded = frame.loc[:, ["date", "actual", "prediction"]].copy()
+    loaded["date"] = pd.to_datetime(loaded["date"], errors="raise")
+    loaded["actual"] = pd.to_numeric(loaded["actual"], errors="raise").astype(np.float64)
+    loaded["prediction"] = pd.to_numeric(loaded["prediction"], errors="raise").astype(np.float64)
+    return loaded.sort_values("date").reset_index(drop=True)
+
+
+def load_aligned_predictions(models: list[SelectedModel]) -> pd.DataFrame:
+    aligned: pd.DataFrame | None = None
+
+    for model in models:
+        model_frame = load_prediction_frame(model.predictions_path).rename(
+            columns={"prediction": model.slug}
+        )
+
+        if aligned is None:
+            aligned = model_frame.rename(columns={"actual": "actual"})
+            continue
+
+        if len(model_frame) != len(aligned):
+            raise ValueError(
+                "Prediction horizon mismatch: "
+                f"{model.predictions_path} has {len(model_frame)} rows, expected {len(aligned)}."
+            )
+
+        if not model_frame["date"].equals(aligned["date"]):
+            raise ValueError(f"Date alignment mismatch for {model.predictions_path}.")
+
+        if not np.allclose(
+            model_frame["actual"].to_numpy(dtype=np.float64),
+            aligned["actual"].to_numpy(dtype=np.float64),
+            atol=1e-10,
+            rtol=1e-10,
+        ):
+            raise ValueError(f"Actual-value mismatch for {model.predictions_path}.")
+
+        aligned[model.slug] = model_frame[model.slug].to_numpy(dtype=np.float64)
+
+    if aligned is None:
+        raise ValueError("No prediction frames were loaded.")
+
+    return aligned
+
+
+def build_simple_average_predictions(frame: pd.DataFrame, models: list[SelectedModel]) -> np.ndarray:
+    return frame[[model.slug for model in models]].mean(axis=1).to_numpy(dtype=np.float64)
+
+
+def build_inverse_rmse_weights(models: list[SelectedModel]) -> dict[str, float]:
+    inverse_rmse = np.asarray(
+        [1.0 / max(model.rmse, 1e-12) for model in models],
+        dtype=np.float64,
+    )
+    normalized = inverse_rmse / inverse_rmse.sum()
     return {
-        "mae": float(np.mean(np.abs(errors))),
-        "rmse": float(np.sqrt(np.mean(np.square(errors)))),
-        "mape": float(np.mean(np.abs(errors) / denom) * 100.0),
-        "smape": float(smape),
-        "r2": float(r2_score(actual, predicted)),
-        "directional_accuracy": float(da.mean() * 100),
+        model.slug: float(weight)
+        for model, weight in zip(models, normalized, strict=True)
     }
 
 
-def load_all_predictions() -> tuple[pd.DataFrame, np.ndarray, np.ndarray, pd.DatetimeIndex]:
-    """Load all model predictions from CSV files. Returns wide DataFrame + actual + prev_actual + dates."""
-    import joblib
-    arrays = joblib.load(ARTIFACTS_DIR / "preprocessed_arrays.joblib")
-    y_test = arrays["y_test"]
-    y_train_last = float(arrays["y_train"][-1])
-    prev_actual = np.concatenate(([y_train_last], y_test[:-1]))
-    test_dates = pd.to_datetime(arrays["test_index"])
+def build_weighted_predictions(
+    frame: pd.DataFrame,
+    models: list[SelectedModel],
+) -> tuple[np.ndarray, dict[str, float]]:
+    weights = build_inverse_rmse_weights(models)
+    weighted = np.zeros(len(frame), dtype=np.float64)
+    for model in models:
+        weighted += frame[model.slug].to_numpy(dtype=np.float64) * weights[model.slug]
+    return weighted, weights
 
-    # Collect all prediction files
-    pred_dirs = [
-        PROJECT_ROOT / "results" / "statistical",
-        PROJECT_ROOT / "results" / "ml",
-        PROJECT_ROOT / "results" / "dl_rnn",
-        PROJECT_ROOT / "results" / "dl_advanced",
+
+def build_stacking_predictions(
+    frame: pd.DataFrame,
+    models: list[SelectedModel],
+    warmup: int = STACKING_WARMUP,
+) -> tuple[np.ndarray, int]:
+    feature_matrix = frame[[model.slug for model in models]].to_numpy(dtype=np.float64)
+    target = frame["actual"].to_numpy(dtype=np.float64)
+    if len(feature_matrix) < 2:
+        raise ValueError("Stacking requires at least two aligned observations.")
+
+    effective_warmup = min(max(warmup, feature_matrix.shape[1] + 1), len(feature_matrix) - 1)
+    predictions = np.full(len(feature_matrix), np.nan, dtype=np.float64)
+
+    for index in range(effective_warmup, len(feature_matrix)):
+        meta_model = LinearRegression()
+        meta_model.fit(feature_matrix[:index], target[:index])
+        predictions[index] = float(meta_model.predict(feature_matrix[index : index + 1])[0])
+
+    predictions[:effective_warmup] = feature_matrix[:effective_warmup].mean(axis=1)
+    return predictions, effective_warmup
+
+
+def save_predictions(
+    slug: str,
+    dates: pd.Series,
+    actual: np.ndarray,
+    prediction: np.ndarray,
+) -> Path:
+    output_path = PREDICTIONS_DIR / f"{slug}_predictions.csv"
+    frame = pd.DataFrame(
+        {
+            "date": pd.to_datetime(dates).dt.strftime("%Y-%m-%d"),
+            "actual": actual,
+            "prediction": prediction,
+            "residual": actual - prediction,
+            "abs_error": np.abs(actual - prediction),
+        }
+    )
+    frame.to_csv(output_path, index=False)
+    return output_path
+
+
+def persist_ensemble_result(
+    model_name: str,
+    slug: str,
+    dates: pd.Series,
+    actual: np.ndarray,
+    prediction: np.ndarray,
+) -> EnsembleResult:
+    metrics = compute_metrics(actual, prediction)
+    predictions_path = save_predictions(
+        slug=slug,
+        dates=dates,
+        actual=actual,
+        prediction=prediction,
+    )
+    log_result("ensemble", model_name, metrics, predictions_path)
+    return EnsembleResult(
+        model_name=model_name,
+        slug=slug,
+        metrics=metrics,
+        predictions_path=predictions_path,
+    )
+
+
+def build_leaderboard_frame() -> pd.DataFrame:
+    leaderboard = sort_registry(load_registry().copy())
+    leaderboard.insert(0, "rank", np.arange(1, len(leaderboard) + 1, dtype=np.int64))
+    leaderboard["family_label"] = leaderboard["model_family"].map(FAMILY_LABELS).fillna(
+        leaderboard["model_family"]
+    )
+    return leaderboard
+
+
+def format_markdown_table(leaderboard: pd.DataFrame) -> str:
+    lines = [
+        "| Rank | Family | Model | RMSE | MAE | MAPE (%) | SMAPE (%) | R^2 |",
+        "|---:|---|---|---:|---:|---:|---:|---:|",
     ]
-
-    all_preds: dict[str, np.ndarray] = {}
-
-    for result_dir in pred_dirs:
-        if not result_dir.exists():
-            continue
-        for csv_file in sorted(result_dir.glob("*_predictions.csv")):
-            slug = csv_file.stem.replace("_predictions", "")
-            try:
-                df = pd.read_csv(csv_file)
-                # Handle both 'predicted' and 'prediction' column names
-                pred_col = "predicted" if "predicted" in df.columns else "prediction"
-                if pred_col in df.columns and len(df[pred_col]) == len(y_test):
-                    all_preds[slug] = df[pred_col].to_numpy(dtype=np.float64)
-            except Exception:
-                continue
-
-    if not all_preds:
-        raise FileNotFoundError("No prediction CSVs found. Run base models first.")
-
-    pred_df = pd.DataFrame(all_preds)
-    return pred_df, y_test, prev_actual, test_dates
-
-
-def load_leaderboards() -> dict[str, pd.DataFrame]:
-    """Load leaderboard CSVs to get validation MAE for weighting."""
-    boards: dict[str, pd.DataFrame] = {}
-    for family, filename in [
-        ("statistical", "statistical_leaderboard.csv"),
-        ("ml", "ml_leaderboard.csv"),
-        ("dl_rnn", "rnn_leaderboard.csv"),
-        ("dl_advanced", "adv_dl_leaderboard.csv"),
-    ]:
-        path = PROJECT_ROOT / "results" / family / filename
-        if path.exists():
-            boards[family] = pd.read_csv(path)
-    return boards
-
-
-def build_combined_leaderboard(boards: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    rows = []
-    for family, df in boards.items():
-        df = df.copy()
-        df["family"] = family
-        rows.append(df)
-    if rows:
-        return pd.concat(rows, ignore_index=True).sort_values("mae")
-    return pd.DataFrame()
-
-
-def simple_average_ensemble(pred_df: pd.DataFrame) -> np.ndarray:
-    return pred_df.mean(axis=1).to_numpy()
-
-
-def top_k_average_ensemble(pred_df: pd.DataFrame, leaderboard: pd.DataFrame, k: int = 5) -> tuple[np.ndarray, list[str]]:
-    top_slugs = leaderboard.nsmallest(k, "mae")["slug"].tolist()
-    available = [s for s in top_slugs if s in pred_df.columns]
-    if len(available) < 2:
-        available = pred_df.columns[:k].tolist()
-    return pred_df[available].mean(axis=1).to_numpy(), available
-
-
-def weighted_average_ensemble(pred_df: pd.DataFrame, leaderboard: pd.DataFrame) -> tuple[np.ndarray, dict[str, float]]:
-    """Inverse-MAE weighted average."""
-    weights: dict[str, float] = {}
-    for slug in pred_df.columns:
-        match = leaderboard[leaderboard["slug"] == slug]
-        if not match.empty:
-            mae = float(match.iloc[0]["mae"])
-            weights[slug] = 1.0 / (mae + 1e-8)
-
-    if not weights:
-        # Fall back to equal weights
-        weights = {slug: 1.0 for slug in pred_df.columns}
-
-    total_w = sum(weights.values())
-    norm_weights = {k: v / total_w for k, v in weights.items()}
-
-    preds = np.zeros(len(pred_df))
-    for slug, w in norm_weights.items():
-        if slug in pred_df.columns:
-            preds += w * pred_df[slug].to_numpy()
-
-    return preds, norm_weights
-
-
-def stacking_ensemble(
-    pred_df: pd.DataFrame,
-    y_test: np.ndarray,
-    meta_model_name: str = "ridge",
-) -> tuple[np.ndarray, Any]:
-    """Train meta-learner on first 50% of test, predict on second 50%.
-    For the first half, fall back to simple average (no meta info available).
-    This is proper out-of-fold stacking — no test label leakage.
-    """
-    n = len(y_test)
-    half = n // 2
-    X = pred_df.to_numpy()
-    X_meta_train = X[:half]
-    y_meta_train = y_test[:half]
-    X_meta_test = X[half:]
-
-    if meta_model_name == "linear":
-        meta = LinearRegression()
-    elif meta_model_name == "ridge":
-        meta = Ridge(alpha=1.0)
-    elif meta_model_name == "xgb":
-        meta = xgb.XGBRegressor(n_estimators=50, learning_rate=0.1, max_depth=3,
-                                  verbosity=0, random_state=42)
-    else:
-        meta = Ridge(alpha=1.0)
-
-    meta.fit(X_meta_train, y_meta_train)
-
-    # First half: use simple average (no leak)
-    preds_first = X_meta_train.mean(axis=1)
-    # Second half: meta-learner predictions (no leak — trained only on first half)
-    preds_second = meta.predict(X_meta_test)
-    preds = np.concatenate([preds_first, preds_second])
-    return preds, meta
-
-
-def render_comparison_plot(results: list[EnsembleResult], y_test: np.ndarray, test_dates: pd.DatetimeIndex) -> None:
-    fig, ax = plt.subplots(figsize=(16, 6))
-    ax.plot(test_dates, y_test, color="black", lw=2, label="Actual", zorder=5)
-    colors = plt.cm.Set1(np.linspace(0, 1, len(results)))
-    for res, color in zip(results, colors):
-        ax.plot(test_dates, res.predictions, lw=1.5, ls="--", color=color,
-                label=f"{res.name} (MAE={res.metrics['mae']:.4f})")
-    ax.set_title("Ensemble Models — All Predictions vs Actual", fontsize=14)
-    ax.legend(fontsize=8, ncol=2, loc="upper left")
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / "ensemble_comparison.png", dpi=120, bbox_inches="tight")
-    plt.close(fig)
-
-
-def render_forecast_plot(result: EnsembleResult, y_test: np.ndarray, test_dates: pd.DatetimeIndex) -> None:
-    fig, axes = plt.subplots(2, 1, figsize=(14, 7))
-    axes[0].plot(test_dates, y_test, color="#2ca02c", lw=1.5, label="Actual")
-    axes[0].plot(test_dates, result.predictions, color="#d62728", lw=1.5, ls="--", label="Predicted")
-    axes[0].set_title(f"{result.name} — Test Forecast", fontsize=13)
-    axes[0].legend(fontsize=10)
-    axes[0].grid(True, alpha=0.3)
-    m = result.metrics
-    axes[0].set_xlabel(f"MAE={m['mae']:.4f}  RMSE={m['rmse']:.4f}  R²={m['r2']:.4f}")
-    residuals = y_test - result.predictions
-    axes[1].bar(test_dates, residuals, color=["#d62728" if r < 0 else "#2ca02c" for r in residuals], width=2, alpha=0.6)
-    axes[1].axhline(0, color="black", lw=0.8)
-    axes[1].set_title("Residuals")
-    axes[1].grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"{result.slug}_forecast.png", dpi=120, bbox_inches="tight")
-    plt.close(fig)
-
-
-def save_leaderboard(results: list[EnsembleResult]) -> pd.DataFrame:
-    rows = [{"model": r.name, "slug": r.slug, **r.metrics} for r in results]
-    df = pd.DataFrame(rows).sort_values("mae")
-    df.to_csv(RESULTS_DIR / "ensemble_leaderboard.csv", index=False)
-    return df
-
-
-def format_leaderboard_md(df: pd.DataFrame) -> str:
-    header = "| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |"
-    sep = "|---|-------|-----|------|------|-------|-----|-----|"
-    lines = [header, sep]
-    for i, row in enumerate(df.itertuples(), 1):
+    for row in leaderboard.itertuples(index=False):
         lines.append(
-            f"| {i} | {row.model} | {row.mae:.4f} | {row.rmse:.4f} | "
-            f"{row.mape:.2f} | {row.smape:.2f} | {row.r2:.4f} | {row.directional_accuracy:.1f}% |"
+            f"| {row.rank} | {row.family_label} | {row.model_name} | "
+            f"{row.RMSE:.4f} | {row.MAE:.4f} | {row.MAPE:.4f} | {row.SMAPE:.4f} | {row.R2:.4f} |"
         )
     return "\n".join(lines)
 
 
-def upsert_research_log_section(section: str) -> None:
-    log = RESEARCH_LOG_PATH.read_text(encoding="utf-8") if RESEARCH_LOG_PATH.exists() else ""
-    if LOG_SECTION_HEADER in log:
-        before, _, after = log.partition(LOG_SECTION_HEADER)
-        after_trimmed = re.sub(r".*?(?=\n## |\Z)", "", after, count=1, flags=re.DOTALL)
-        content = before.rstrip() + "\n\n" + section + "\n" + after_trimmed
+def truncate_label(label: str, max_length: int = 54) -> str:
+    if len(label) <= max_length:
+        return label
+    return label[: max_length - 3].rstrip() + "..."
+
+
+def render_comparison_plot(leaderboard: pd.DataFrame) -> None:
+    families_present = [
+        family for family in FAMILY_ORDER if family in set(leaderboard["model_family"])
+    ]
+    if not families_present:
+        raise ValueError("No families were available for the leaderboard plot.")
+
+    figure_height = max(10.0, 2.4 * len(families_present) + 0.45 * len(leaderboard))
+    figure, axes = plt.subplots(
+        nrows=len(families_present),
+        ncols=1,
+        figsize=(16, figure_height),
+        sharex=True,
+    )
+
+    if len(families_present) == 1:
+        axes = [axes]
+
+    best_rmse = float(leaderboard["RMSE"].min())
+
+    for axis, family in zip(axes, families_present, strict=True):
+        family_frame = leaderboard.loc[leaderboard["model_family"] == family].copy()
+        family_frame = family_frame.sort_values(["RMSE", "MAE", "MAPE"], ascending=True)
+        labels = [truncate_label(name) for name in family_frame["model_name"]]
+        bars = axis.barh(
+            labels,
+            family_frame["RMSE"],
+            color=FAMILY_COLORS.get(family, "#7F7F7F"),
+            alpha=0.9,
+        )
+
+        axis.invert_yaxis()
+        axis.set_title(f"{FAMILY_LABELS.get(family, family)} ({len(family_frame)} models)")
+        axis.grid(axis="x", alpha=0.25)
+        axis.axvline(best_rmse, color="#333333", linestyle="--", linewidth=1.0)
+
+        for bar, row in zip(bars, family_frame.itertuples(index=False), strict=True):
+            axis.text(
+                float(bar.get_width()) + 0.002,
+                float(bar.get_y()) + float(bar.get_height()) / 2.0,
+                f"#{int(row.rank)}  {float(row.RMSE):.4f}",
+                va="center",
+                fontsize=8,
+            )
+
+    axes[-1].set_xlabel("RMSE (lower is better)")
+    figure.suptitle("Liquidity Index Ablation Leaderboard by Model Family", fontsize=16)
+    figure.tight_layout(rect=[0, 0, 1, 0.98])
+    figure.savefig(PLOT_PATH, dpi=150, bbox_inches="tight")
+    plt.close(figure)
+
+
+def write_leaderboard_markdown(
+    leaderboard: pd.DataFrame,
+    best_overall: pd.Series,
+    best_ensemble: pd.Series,
+) -> None:
+    content = "\n".join(
+        [
+            "# Full Ablation Leaderboard",
+            "",
+            "Generated from `results/metrics_registry.csv` after step-8 ensemble evaluation.",
+            "",
+            (
+                f"Best overall model: `{best_overall['model_name']}` "
+                f"({FAMILY_LABELS.get(str(best_overall['model_family']), str(best_overall['model_family']))}) "
+                f"with RMSE={float(best_overall['RMSE']):.4f}."
+            ),
+            (
+                f"Best ensemble: `{best_ensemble['model_name']}` "
+                f"with RMSE={float(best_ensemble['RMSE']):.4f}."
+            ),
+            "",
+            format_markdown_table(leaderboard),
+            "",
+            f"Comparison plot: `plots/{PLOT_PATH.name}`",
+            "",
+        ]
+    )
+    LEADERBOARD_MD_PATH.write_text(content, encoding="utf-8")
+
+
+def format_model_list(models: list[SelectedModel]) -> str:
+    return ", ".join(f"`{model.model_name}`" for model in models)
+
+
+def format_weight_summary(
+    models: list[SelectedModel],
+    weights: dict[str, float],
+) -> str:
+    parts = []
+    for model in models:
+        parts.append(f"`{model.model_name}`={weights[model.slug]:.3f}")
+    return ", ".join(parts)
+
+
+def build_research_log_section(
+    leaderboard: pd.DataFrame,
+    simple_models: list[SelectedModel],
+    weighted_models: list[SelectedModel],
+    weighted_weights: dict[str, float],
+    stacking_models: list[SelectedModel],
+    stacking_warmup: int,
+) -> str:
+    best_overall = leaderboard.iloc[0]
+    base_leaderboard = leaderboard.loc[leaderboard["model_family"] != "ensemble"].copy()
+    best_base = base_leaderboard.iloc[0]
+    ensemble_leaderboard = leaderboard.loc[leaderboard["model_family"] == "ensemble"].copy()
+    best_ensemble = ensemble_leaderboard.iloc[0]
+    rmse_delta = float(best_base["RMSE"]) - float(best_ensemble["RMSE"])
+
+    if rmse_delta > 0:
+        ensemble_takeaway = (
+            f"- Best ensemble vs best base model: ensemble improved RMSE by {rmse_delta:.4f}."
+        )
+    elif rmse_delta < 0:
+        ensemble_takeaway = (
+            f"- Best ensemble vs best base model: ensemble trailed by {-rmse_delta:.4f} RMSE."
+        )
     else:
-        content = log.rstrip() + "\n\n" + section + "\n"
-    RESEARCH_LOG_PATH.write_text(content, encoding="utf-8")
+        ensemble_takeaway = "- Best ensemble matched the best base model on RMSE."
 
-
-def build_research_log_section(df: pd.DataFrame, n_base_models: int) -> str:
-    best = df.iloc[0]
     section_lines = [
         LOG_SECTION_HEADER,
         "",
-        "### Experimental Setup",
-        f"- Base models: {n_base_models} total predictions from statistical, ML, RNN, and advanced DL families",
-        "- Simple Average: unweighted mean of all base model predictions",
-        "- Top-5 Average: unweighted mean of 5 best models ranked by test MAE",
-        "- Weighted Average: inverse-MAE weights normalized to sum to 1",
-        "- Stacking (Linear/Ridge/XGB): meta-learner trained on base model predictions",
+        "### Ensemble Setup",
+        f"- Source of truth: `{REGISTRY_PATH.relative_to(PROJECT_ROOT).as_posix()}` and `results/predictions/**`.",
+        f"- Simple Average Ensemble used the top-3 ML models by RMSE: {format_model_list(simple_models)}.",
+        (
+            "- Weighted Ensemble used the top-5 non-ensemble models across all families "
+            f"with inverse-RMSE weights: {format_weight_summary(weighted_models, weighted_weights)}."
+        ),
+        (
+            "- Stacking Ensemble used a LinearRegression meta-learner on the top-3 "
+            "non-ensemble base models with walk-forward out-of-fold predictions "
+            f"after a {stacking_warmup}-observation warm-up window."
+        ),
         "",
-        "### Results Leaderboard",
+        "### Ensemble Results",
+        format_markdown_table(ensemble_leaderboard),
         "",
-        format_leaderboard_md(df),
+        "### Full Leaderboard",
+        format_markdown_table(leaderboard),
         "",
-        "### Researcher Notes",
-        f"- Best ensemble: **{best.model}** — MAE={best.mae:.4f}, RMSE={best.rmse:.4f}, R²={best.r2:.4f}",
-        "- Ensemble diversity is key: mixing statistical, ML, and DL predictions reduces systematic bias.",
-        "- Weighted averaging typically outperforms simple average when model quality varies significantly.",
-        "- Stacking with a simple linear meta-learner is often the most robust ensemble strategy.",
+        "### Findings",
+        (
+            f"- Best overall model after ensembles: `{best_overall['model_name']}` "
+            f"({best_overall['family_label']}) with RMSE={float(best_overall['RMSE']):.4f}, "
+            f"MAE={float(best_overall['MAE']):.4f}, and R^2={float(best_overall['R2']):.4f}."
+        ),
+        (
+            f"- Best ensemble: `{best_ensemble['model_name']}` with RMSE={float(best_ensemble['RMSE']):.4f}, "
+            f"MAE={float(best_ensemble['MAE']):.4f}, and R^2={float(best_ensemble['R2']):.4f}."
+        ),
+        ensemble_takeaway,
+        (
+            f"- Weighted ensemble constituents: {format_model_list(weighted_models)}."
+        ),
+        (
+            f"- Stacking base models: {format_model_list(stacking_models)}."
+        ),
         "",
         "### Saved Artifacts",
-        "- `results/ensemble/ensemble_leaderboard.csv`",
-        "- `plots/ensemble/ensemble_comparison.png`",
+        "- `src/models/ensemble_models.py`",
+        "- `results/predictions/ensemble/*.csv`",
+        "- `results/leaderboard.csv`",
+        "- `results/LEADERBOARD.md`",
+        "- `plots/leaderboard_comparison.png`",
+        "- `results/metrics_registry.csv`",
     ]
     return "\n".join(section_lines)
 
 
+def upsert_research_log(section_text: str) -> None:
+    current_text = (
+        RESEARCH_LOG_PATH.read_text(encoding="utf-8")
+        if RESEARCH_LOG_PATH.exists()
+        else ""
+    )
+    pattern = rf"{re.escape(LOG_SECTION_HEADER)}.*?(?=\n## |\Z)"
+
+    if re.search(pattern, current_text, flags=re.DOTALL):
+        updated_text = re.sub(
+            pattern,
+            section_text.rstrip(),
+            current_text,
+            count=1,
+            flags=re.DOTALL,
+        )
+    else:
+        separator = "\n\n" if current_text.strip() else ""
+        updated_text = f"{current_text.rstrip()}{separator}{section_text.rstrip()}\n"
+
+    RESEARCH_LOG_PATH.write_text(updated_text.rstrip() + "\n", encoding="utf-8")
+
+
 def run_all_ensemble_models() -> pd.DataFrame:
-    print("=" * 60)
-    print("ENSEMBLE MODELS ABLATION STUDY")
-    print("=" * 60)
     ensure_dirs()
+    prune_existing_ensemble_rows()
 
-    pred_df, y_test, prev_actual, test_dates = load_all_predictions()
-    n_models = len(pred_df.columns)
-    print(f"  Loaded {n_models} base model predictions: {list(pred_df.columns)}")
+    base_registry = load_base_registry()
+    simple_models = select_top_models(base_registry, count=3, family="ml")
+    weighted_models = select_top_models(base_registry, count=5)
+    stacking_models = select_top_models(base_registry, count=3)
 
-    boards = load_leaderboards()
-    combined_lb = build_combined_leaderboard(boards)
+    simple_frame = load_aligned_predictions(simple_models)
+    weighted_frame = load_aligned_predictions(weighted_models)
+    stacking_frame = load_aligned_predictions(stacking_models)
 
-    results: list[EnsembleResult] = []
+    actual = simple_frame["actual"].to_numpy(dtype=np.float64)
+    dates = simple_frame["date"]
 
-    # 1. Simple Average
-    preds_avg = simple_average_ensemble(pred_df)
-    results.append(EnsembleResult(
-        name="Simple Average (all models)",
-        slug="ensemble_avg_all",
-        predictions=preds_avg,
-        metrics=compute_metrics(y_test, preds_avg, prev_actual),
-        weights={slug: 1.0 / n_models for slug in pred_df.columns},
-        notes="Unweighted mean of all base model predictions",
-    ))
+    if not dates.equals(weighted_frame["date"]) or not dates.equals(stacking_frame["date"]):
+        raise ValueError("Ensemble component predictions are not aligned on identical dates.")
 
-    # 2. Top-5 Average
-    if not combined_lb.empty:
-        preds_top5, top5_slugs = top_k_average_ensemble(pred_df, combined_lb, k=5)
-        results.append(EnsembleResult(
-            name="Top-5 Average",
-            slug="ensemble_top5",
-            predictions=preds_top5,
-            metrics=compute_metrics(y_test, preds_top5, prev_actual),
-            weights={s: 0.2 for s in top5_slugs},
-            notes=f"Unweighted mean of top-5 models: {top5_slugs}",
-        ))
+    if not np.allclose(
+        actual,
+        weighted_frame["actual"].to_numpy(dtype=np.float64),
+        atol=1e-10,
+        rtol=1e-10,
+    ) or not np.allclose(
+        actual,
+        stacking_frame["actual"].to_numpy(dtype=np.float64),
+        atol=1e-10,
+        rtol=1e-10,
+    ):
+        raise ValueError("Ensemble component predictions do not share the same actual series.")
 
-        preds_top3, top3_slugs = top_k_average_ensemble(pred_df, combined_lb, k=3)
-        results.append(EnsembleResult(
-            name="Top-3 Average",
-            slug="ensemble_top3",
-            predictions=preds_top3,
-            metrics=compute_metrics(y_test, preds_top3, prev_actual),
-            weights={s: 1.0/3 for s in top3_slugs},
-            notes=f"Unweighted mean of top-3 models: {top3_slugs}",
-        ))
+    simple_predictions = build_simple_average_predictions(simple_frame, simple_models)
+    weighted_predictions, weighted_weights = build_weighted_predictions(
+        weighted_frame,
+        weighted_models,
+    )
+    stacking_predictions, stacking_warmup = build_stacking_predictions(
+        stacking_frame,
+        stacking_models,
+    )
 
-    # 3. Weighted Average (inverse-MAE)
-    if not combined_lb.empty:
-        preds_wt, norm_weights = weighted_average_ensemble(pred_df, combined_lb)
-        results.append(EnsembleResult(
-            name="Weighted Average (inv-MAE)",
-            slug="ensemble_weighted",
-            predictions=preds_wt,
-            metrics=compute_metrics(y_test, preds_wt, prev_actual),
-            weights=norm_weights,
-            notes="Inverse-MAE weighted average across all models",
-        ))
+    ensemble_results = [
+        persist_ensemble_result(
+            model_name=SIMPLE_AVERAGE_NAME,
+            slug="simple_average_top3_ml",
+            dates=dates,
+            actual=actual,
+            prediction=simple_predictions,
+        ),
+        persist_ensemble_result(
+            model_name=WEIGHTED_NAME,
+            slug="weighted_top5_overall",
+            dates=dates,
+            actual=actual,
+            prediction=weighted_predictions,
+        ),
+        persist_ensemble_result(
+            model_name=STACKING_NAME,
+            slug="stacking_linear_top3_base",
+            dates=dates,
+            actual=actual,
+            prediction=stacking_predictions,
+        ),
+    ]
 
-    # 4. Stacking — Ridge meta-learner
-    preds_stack_ridge, _ = stacking_ensemble(pred_df, y_test, "ridge")
-    results.append(EnsembleResult(
-        name="Stacking (Ridge meta)",
-        slug="ensemble_stack_ridge",
-        predictions=preds_stack_ridge,
-        metrics=compute_metrics(y_test, preds_stack_ridge, prev_actual),
-        weights={},
-        notes="Ridge linear meta-learner on base model predictions",
-    ))
+    leaderboard = build_leaderboard_frame()
+    leaderboard.to_csv(LEADERBOARD_CSV_PATH, index=False)
+    render_comparison_plot(leaderboard)
 
-    # 5. Stacking — Linear meta-learner
-    preds_stack_lin, _ = stacking_ensemble(pred_df, y_test, "linear")
-    results.append(EnsembleResult(
-        name="Stacking (Linear meta)",
-        slug="ensemble_stack_linear",
-        predictions=preds_stack_lin,
-        metrics=compute_metrics(y_test, preds_stack_lin, prev_actual),
-        weights={},
-        notes="OLS linear meta-learner on base model predictions",
-    ))
+    best_overall = leaderboard.iloc[0]
+    best_ensemble = leaderboard.loc[leaderboard["model_family"] == "ensemble"].iloc[0]
+    write_leaderboard_markdown(leaderboard, best_overall, best_ensemble)
+    upsert_research_log(
+        build_research_log_section(
+            leaderboard=leaderboard,
+            simple_models=simple_models,
+            weighted_models=weighted_models,
+            weighted_weights=weighted_weights,
+            stacking_models=stacking_models,
+            stacking_warmup=stacking_warmup,
+        )
+    )
 
-    # 6. Stacking — XGBoost meta-learner
-    preds_stack_xgb, _ = stacking_ensemble(pred_df, y_test, "xgb")
-    results.append(EnsembleResult(
-        name="Stacking (XGBoost meta)",
-        slug="ensemble_stack_xgb",
-        predictions=preds_stack_xgb,
-        metrics=compute_metrics(y_test, preds_stack_xgb, prev_actual),
-        weights={},
-        notes="XGBoost meta-learner on base model predictions",
-    ))
+    results_frame = pd.DataFrame(
+        [
+            {
+                "model_name": result.model_name,
+                "slug": result.slug,
+                "RMSE": result.metrics["RMSE"],
+                "MAE": result.metrics["MAE"],
+                "R2": result.metrics["R2"],
+                "predictions_path": result.predictions_path.relative_to(PROJECT_ROOT).as_posix(),
+            }
+            for result in ensemble_results
+        ]
+    ).sort_values(["RMSE", "MAE"], ascending=True)
 
-    # Save predictions and plots
-    for result in results:
-        df_pred = pd.DataFrame({
-            "date": test_dates,
-            "actual": y_test,
-            "predicted": result.predictions,
-            "error": y_test - result.predictions,
-        })
-        df_pred.to_csv(RESULTS_DIR / f"{result.slug}_predictions.csv", index=False)
-        render_forecast_plot(result, y_test, test_dates)
-        print(f"  {result.name}: MAE={result.metrics['mae']:.4f}  R²={result.metrics['r2']:.4f}")
+    return results_frame.reset_index(drop=True)
 
-    metrics_all = {r.slug: r.metrics for r in results}
-    (RESULTS_DIR / "ensemble_all_metrics.json").write_text(json.dumps(metrics_all, indent=2), encoding="utf-8")
 
-    leaderboard = save_leaderboard(results)
-    render_comparison_plot(results, y_test, test_dates)
-    section = build_research_log_section(leaderboard, n_models)
-    upsert_research_log_section(section)
-
-    print("\n" + "=" * 60)
-    print("ENSEMBLE LEADERBOARD (sorted by MAE)")
-    print("=" * 60)
-    print(leaderboard[["model", "mae", "rmse", "r2", "directional_accuracy"]].to_string(index=False))
-    return leaderboard
+def main() -> None:
+    summary = run_all_ensemble_models()
+    print(summary.to_string(index=False))
 
 
 if __name__ == "__main__":
-    run_all_ensemble_models()
+    main()

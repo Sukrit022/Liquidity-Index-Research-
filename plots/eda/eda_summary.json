@@ -1,0 +1,135 @@
+{
+  "dataset_path": "C:\\Users\\amrit\\liquidity-research\\Liquidity-Index-Research-\\Code\\market_liquidity_index.csv",
+  "shape": {
+    "rows": 3365,
+    "columns": 2
+  },
+  "columns": [
+    "DATE",
+    "Market_Liquidity_Index"
+  ],
+  "dtypes": {
+    "DATE": "datetime64[ns]",
+    "Market_Liquidity_Index": "float64"
+  },
+  "date_range": {
+    "start": "2011-06-01",
+    "end": "2024-12-31",
+    "calendar_span_days": 4962
+  },
+  "missing_values": {
+    "DATE": 0,
+    "Market_Liquidity_Index": 0
+  },
+  "duplicate_dates": 0,
+  "weekday_counts": {
+    "Friday": 664,
+    "Monday": 669,
+    "Saturday": 12,
+    "Sunday": 4,
+    "Thursday": 671,
+    "Tuesday": 674,
+    "Wednesday": 671
+  },
+  "longest_calendar_gap_days": 5,
+  "descriptive_stats": {
+    "count": 3365.0,
+    "mean": -6.757018586723092e-17,
+    "std": 1.000148621536081,
+    "min": -4.763660426452972,
+    "25%": -0.5433450874107252,
+    "50%": 0.2032568106540117,
+    "75%": 0.8130275622933947,
+    "max": 1.9338665483907276
+  },
+  "percentiles": {
+    "p01": -2.3107421671643458,
+    "p05": -1.8432924949563716,
+    "p95": 1.3111253221918195,
+    "p99": 1.5330514325762368
+  },
+  "skewness": -0.6831541193245468,
+  "kurtosis": -0.2236093083200923,
+  "outliers_abs_z_gt_3": 6,
+  "stationarity": {
+    "raw": {
+      "adf": {
+        "statistic": -1.8266523692643863,
+        "p_value": 0.36731209858907243,
+        "used_lags": 14,
+        "n_obs": 3350,
+        "critical_values": {
+          "1%": -3.4323035277087404,
+          "5%": -2.862403154462218,
+          "10%": -2.567229474181332
+        },
+        "icbest": -1093.366975086572,
+        "decision": "non-stationary"
+      },
+      "kpss": {
+        "statistic": 7.6339761405329165,
+        "p_value": 0.01,
+        "used_lags": 37,
+        "critical_values": {
+          "10%": 0.347,
+          "5%": 0.463,
+          "2.5%": 0.574,
+          "1%": 0.739
+        },
+        "decision": "non-stationary",
+        "note": "actual p-value is smaller than the reported 0.01 bound"
+      }
+    },
+    "first_difference": {
+      "adf": {
+        "statistic": -20.644230659242588,
+        "p_value": 0.0,
+        "used_lags": 13,
+        "n_obs": 3350,
+        "critical_values": {
+          "1%": -3.4323035277087404,
+          "5%": -2.862403154462218,
+          "10%": -2.567229474181332
+        },
+        "icbest": -1091.348653020832,
+        "decision": "stationary"
+      },
+      "kpss": {
+        "statistic": 0.029045929083185693,
+        "p_value": 0.1,
+        "used_lags": 78,
+        "critical_values": {
+          "10%": 0.347,
+          "5%": 0.463,
+          "2.5%": 0.574,
+          "1%": 0.739
+        },
+        "decision": "stationary",
+        "note": "actual p-value is greater than the reported 0.10 bound"
+      }
+    }
+  },
+  "lag1_autocorrelation": 0.9706271099254564,
+  "lag5_autocorrelation": 0.9612654582825212,
+  "lag21_autocorrelation": 0.9344177869472097,
+  "linear_trend_r2": 0.8144358603637333,
+  "monthly_means": {
+    "1": -0.028768039461457576,
+    "2": -0.009375423021611666,
+    "3": -0.02203857471861173,
+    "4": 0.006481662344422618,
+    "5": 0.017403746247213955,
+    "6": -0.057905877348878844,
+    "7": 0.009438801639513585,
+    "8": 0.02170454060226807,
+    "9": 0.03503113210615923,
+    "10": -0.027757678386763712,
+    "11": 0.020593287201739533,
+    "12": 0.03308865128264392
+  },
+  "decomposition": {
+    "period": 21,
+    "seasonal_strength": 0.003871927207938164,
+    "trend_strength": 0.9641601820614453
+  }
+}

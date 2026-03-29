@@ -1,575 +1,557 @@
-"""
-Advanced DL Models — Liquidity Index Forecasting
-=================================================
-Models:
-  - CNN-LSTM: 1D convolutional feature extractor feeding LSTM
-  - CNN-GRU: 1D convolutional feature extractor feeding GRU
-  - Attention LSTM: LSTM with additive (Bahdanau) self-attention
-  - Temporal Fusion Transformer (simplified): Multi-head self-attention
-    with positional encoding and feed-forward layers
-  - WaveNet-style Dilated Causal CNN
-  - TCN (Temporal Convolutional Network)
-Strategy: Same sequence-to-one setup as dl_rnn_models.py (seq_len=30).
-          Same MinMaxScaler features, same train/val/test split.
-Outputs:  results/dl_advanced/  |  plots/dl_advanced/
-"""
 from __future__ import annotations
 
-import json
 import os
-import warnings
+import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-warnings.filterwarnings("ignore")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import joblib
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import r2_score
-
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
-
-tf.get_logger().setLevel("ERROR")
+from tensorflow.keras import callbacks, layers
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
-RESULTS_DIR = PROJECT_ROOT / "results" / "dl_advanced"
-PLOTS_DIR = PROJECT_ROOT / "plots" / "dl_advanced"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+ARTIFACT_CANDIDATES = (
+    PROJECT_ROOT / "data",
+    PROJECT_ROOT / "artifacts",
+)
+RESULTS_ROOT = PROJECT_ROOT / "results"
+PREDICTIONS_DIR = RESULTS_ROOT / "predictions" / "dl_advanced"
 RESEARCH_LOG_PATH = PROJECT_ROOT / "RESEARCH_LOG.md"
 
-SEQUENCE_LENGTH = 30
-BATCH_SIZE = 64
-MAX_EPOCHS = 150
-PATIENCE = 20
-MAPE_EPSILON = 1e-6
-LOG_SECTION_HEADER = "## Advanced DL Models"
+LOOKBACK_WINDOW = 30
+EPOCHS = 50
+BATCH_SIZE = 32
+EARLY_STOPPING_PATIENCE = 10
+VALIDATION_FRACTION = 0.1
+LEARNING_RATE = 1e-3
 SEED = 42
+LOG_SECTION_HEADER = "## Advanced DL Models"
 
-tf.random.set_seed(SEED)
 np.random.seed(SEED)
+tf.keras.utils.set_random_seed(SEED)
+try:
+    tf.config.experimental.enable_op_determinism()
+except Exception:
+    pass
 
 
-@dataclass
-class AdvDLResult:
-    name: str
+@dataclass(frozen=True)
+class ModelSpec:
+    model_name: str
     slug: str
-    predictions: np.ndarray
+    factory: Callable[[tuple[int, int]], keras.Model]
+
+
+@dataclass(frozen=True)
+class ModelResult:
+    model_name: str
+    slug: str
     metrics: dict[str, float]
+    predictions_path: Path
+    architecture_path: Path
     history: dict[str, list[float]]
-    config: dict[str, Any]
-    notes: str = ""
 
 
-def load_artifacts() -> dict[str, Any]:
-    arrays = joblib.load(ARTIFACTS_DIR / "preprocessed_arrays.joblib")
-    dl_scalers = joblib.load(ARTIFACTS_DIR / "minmax_scalers.joblib")
-    return {**arrays, "dl_scalers": dl_scalers}
+class DotProductAttention(layers.Layer):
+    """Self-attention over sequence states using scaled dot-product weights."""
+
+    def call(self, inputs: tf.Tensor) -> tf.Tensor:
+        feature_dim = tf.cast(tf.shape(inputs)[-1], tf.float32)
+        scores = tf.matmul(inputs, inputs, transpose_b=True)
+        scaled_scores = scores / tf.math.sqrt(tf.maximum(feature_dim, 1.0))
+        weights = tf.nn.softmax(scaled_scores, axis=-1)
+        return tf.matmul(weights, inputs)
+
+    def get_config(self) -> dict[str, Any]:
+        return super().get_config()
+
+
+def resolve_artifact_path(filename: str) -> Path:
+    for base_dir in ARTIFACT_CANDIDATES:
+        candidate = base_dir / filename
+        if candidate.exists():
+            return candidate
+    checked = ", ".join(str(path / filename) for path in ARTIFACT_CANDIDATES)
+    raise FileNotFoundError(f"Could not find {filename}. Checked: {checked}")
 
 
 def ensure_dirs() -> None:
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+    PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
+    RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
-def build_sequences(features: np.ndarray, targets: np.ndarray, seq_len: int) -> tuple[np.ndarray, np.ndarray]:
-    X, y = [], []
-    for i in range(seq_len, len(features)):
-        X.append(features[i - seq_len:i])
-        y.append(targets[i])
-    return np.array(X, dtype=np.float32), np.array(y, dtype=np.float32)
+def load_inputs() -> dict[str, Any]:
+    arrays_path = resolve_artifact_path("preprocessed_arrays.joblib")
+    scalers_path = resolve_artifact_path("minmax_scalers.joblib")
 
+    arrays = joblib.load(arrays_path)
+    scalers = joblib.load(scalers_path)
+    if not isinstance(scalers, dict) or "target" not in scalers:
+        raise ValueError("minmax_scalers.joblib must contain a 'target' MinMaxScaler.")
 
-def compute_metrics(actual: np.ndarray, predicted: np.ndarray, prev_actual: np.ndarray) -> dict[str, float]:
-    errors = actual - predicted
-    denom = np.clip(np.abs(actual), MAPE_EPSILON, None)
-    da = np.sign(actual - prev_actual) == np.sign(predicted - prev_actual)
-    smape = np.mean(2 * np.abs(errors) / (np.abs(actual) + np.abs(predicted) + MAPE_EPSILON)) * 100
     return {
-        "mae": float(np.mean(np.abs(errors))),
-        "rmse": float(np.sqrt(np.mean(np.square(errors)))),
-        "mape": float(np.mean(np.abs(errors) / denom) * 100.0),
-        "smape": float(smape),
-        "r2": float(r2_score(actual, predicted)),
-        "directional_accuracy": float(da.mean() * 100),
+        "arrays_path": arrays_path,
+        "scalers_path": scalers_path,
+        "train_feature_scaled": np.asarray(arrays["X_train_dl_scaled"], dtype=np.float32),
+        "test_feature_scaled": np.asarray(arrays["X_test_dl_scaled"], dtype=np.float32),
+        "train_target_scaled": np.asarray(arrays["y_train_dl_scaled"], dtype=np.float32).reshape(-1),
+        "test_target_scaled": np.asarray(arrays["y_test_dl_scaled"], dtype=np.float32).reshape(-1),
+        "train_actual": np.asarray(arrays["y_train"], dtype=np.float64).reshape(-1),
+        "test_actual": np.asarray(arrays["y_test"], dtype=np.float64).reshape(-1),
+        "train_index": pd.to_datetime(arrays["train_index"]),
+        "test_index": pd.to_datetime(arrays["test_index"]),
+        "target_scaler": scalers["target"],
+        "target_name": str(arrays.get("target_name", "liquidity_index")),
+        "feature_names": [str(name) for name in arrays.get("feature_names", [])],
     }
 
 
-def inverse_transform_target(values: np.ndarray, dl_scalers: Any) -> np.ndarray:
-    return dl_scalers["target"].inverse_transform(values.reshape(-1, 1)).ravel()
+def build_feature_sequences(
+    features: np.ndarray,
+    targets: np.ndarray,
+    lookback: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    feature_array = np.asarray(features, dtype=np.float32)
+    target_array = np.asarray(targets, dtype=np.float32).reshape(-1)
+    if len(feature_array) <= lookback:
+        raise ValueError(
+            f"Need more than {lookback} observations to build sequences; received {len(feature_array)}."
+        )
+    if len(feature_array) != len(target_array):
+        raise ValueError(
+            "Feature and target arrays must have the same length; got "
+            f"{len(feature_array)} and {len(target_array)}."
+        )
+
+    X_values = []
+    y_values = []
+    for idx in range(lookback, len(feature_array)):
+        X_values.append(feature_array[idx - lookback : idx])
+        y_values.append(target_array[idx])
+
+    X_array = np.asarray(X_values, dtype=np.float32)
+    y_array = np.asarray(y_values, dtype=np.float32).reshape(-1)
+    return X_array, y_array
 
 
-# ─── Custom Keras Layers ─────────────────────────────────────────────────────
-
-class BahdanauAttention(layers.Layer):
-    """Additive attention over LSTM hidden states."""
-    def __init__(self, units: int, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        self.W = layers.Dense(units)
-        self.V = layers.Dense(1)
-
-    def call(self, hidden_states: tf.Tensor) -> tf.Tensor:
-        score = self.V(tf.nn.tanh(self.W(hidden_states)))
-        weights = tf.nn.softmax(score, axis=1)
-        context = tf.reduce_sum(weights * hidden_states, axis=1)
-        return context
-
-
-class PositionalEncoding(layers.Layer):
-    """Sinusoidal positional encoding for transformer."""
-    def __init__(self, seq_len: int, d_model: int, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        positions = np.arange(seq_len)[:, np.newaxis]
-        dims = np.arange(d_model)[np.newaxis, :]
-        angles = positions / np.power(10000, (2 * (dims // 2)) / d_model)
-        angles[:, 0::2] = np.sin(angles[:, 0::2])
-        angles[:, 1::2] = np.cos(angles[:, 1::2])
-        self.encoding = tf.cast(angles[np.newaxis, :, :], tf.float32)
-
-    def call(self, x: tf.Tensor) -> tf.Tensor:
-        return x + self.encoding[:, :tf.shape(x)[1], :]
-
-
-# ─── Model Builders ──────────────────────────────────────────────────────────
-
-def build_cnn_lstm(input_shape: tuple[int, int]) -> keras.Model:
-    """1D CNN feature extractor → LSTM."""
-    inp = layers.Input(shape=input_shape)
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu")(inp)
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu", dilation_rate=2)(x)
-    x = layers.MaxPooling1D(pool_size=2)(x)
-    x = layers.LSTM(64, dropout=0.2)(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_cnn_gru(input_shape: tuple[int, int]) -> keras.Model:
-    """1D CNN feature extractor → GRU."""
-    inp = layers.Input(shape=input_shape)
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu")(inp)
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu", dilation_rate=2)(x)
-    x = layers.MaxPooling1D(pool_size=2)(x)
-    x = layers.GRU(64, dropout=0.2)(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_attention_lstm(input_shape: tuple[int, int]) -> keras.Model:
-    """LSTM with Bahdanau self-attention over all hidden states."""
-    inp = layers.Input(shape=input_shape)
-    x = layers.LSTM(64, return_sequences=True, dropout=0.2)(inp)
-    x = BahdanauAttention(units=32)(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_attention_bilstm(input_shape: tuple[int, int]) -> keras.Model:
-    """BiLSTM + self-attention."""
-    inp = layers.Input(shape=input_shape)
-    x = layers.Bidirectional(layers.LSTM(64, return_sequences=True, dropout=0.2))(inp)
-    x = BahdanauAttention(units=64)(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_transformer(input_shape: tuple[int, int], d_model: int = 64, num_heads: int = 4, ff_dim: int = 128) -> keras.Model:
-    """Simplified Temporal Transformer: projection → positional encoding → multi-head attention → FFN → output."""
-    inp = layers.Input(shape=input_shape)
-    # Project features to d_model
-    x = layers.Dense(d_model)(inp)
-    x = PositionalEncoding(seq_len=input_shape[0], d_model=d_model)(x)
-
-    # Transformer encoder block × 2
-    for _ in range(2):
-        # Multi-head self-attention
-        attn_out = layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model // num_heads)(x, x)
-        x = layers.LayerNormalization()(x + attn_out)
-        # Feed-forward
-        ffn = layers.Dense(ff_dim, activation="gelu")(x)
-        ffn = layers.Dense(d_model)(ffn)
-        ffn = layers.Dropout(0.1)(ffn)
-        x = layers.LayerNormalization()(x + ffn)
-
-    # Pool over time and output
-    x = layers.GlobalAveragePooling1D()(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(5e-4), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_wavenet_cnn(input_shape: tuple[int, int]) -> keras.Model:
-    """WaveNet-style dilated causal convolutions."""
-    inp = layers.Input(shape=input_shape)
-    x = layers.Conv1D(64, kernel_size=2, padding="causal", activation="relu")(inp)
-
-    skip_connections = []
-    for dilation in [1, 2, 4, 8, 16]:
-        residual = x
-        x = layers.Conv1D(64, kernel_size=2, padding="causal", dilation_rate=dilation, activation="tanh")(x)
-        gate = layers.Conv1D(64, kernel_size=2, padding="causal", dilation_rate=dilation, activation="sigmoid")(residual)
-        x = layers.Multiply()([x, gate])
-        x = layers.Conv1D(64, kernel_size=1)(x)
-        skip_connections.append(x)
-        x = layers.Add()([x, residual]) if residual.shape[-1] == x.shape[-1] else x
-
-    x = layers.Add()(skip_connections)
-    x = layers.Activation("relu")(x)
-    x = layers.GlobalAveragePooling1D()(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_tcn(input_shape: tuple[int, int]) -> keras.Model:
-    """Temporal Convolutional Network with residual connections."""
-    inp = layers.Input(shape=input_shape)
-    x = inp
-    n_filters = 64
-
-    for dilation in [1, 2, 4, 8]:
-        res = x
-        x = layers.Conv1D(n_filters, kernel_size=3, padding="causal", dilation_rate=dilation)(x)
-        x = layers.LayerNormalization()(x)
-        x = layers.Activation("relu")(x)
-        x = layers.Dropout(0.1)(x)
-        x = layers.Conv1D(n_filters, kernel_size=3, padding="causal", dilation_rate=dilation)(x)
-        x = layers.LayerNormalization()(x)
-        # Residual connection (1x1 conv if dimensions mismatch)
-        if res.shape[-1] != n_filters:
-            res = layers.Conv1D(n_filters, kernel_size=1)(res)
-        x = layers.Add()([x, res])
-        x = layers.Activation("relu")(x)
-
-    x = x[:, -1, :]  # Take last timestep
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse", metrics=["mae"])
-    return model
-
-
-def build_cnn_transformer(input_shape: tuple[int, int]) -> keras.Model:
-    """CNN local feature extraction + Transformer global context."""
-    inp = layers.Input(shape=input_shape)
-    # Local CNN features
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu")(inp)
-    x = layers.Conv1D(64, kernel_size=3, padding="causal", activation="relu")(x)
-
-    # Transformer on CNN features
-    attn = layers.MultiHeadAttention(num_heads=4, key_dim=16)(x, x)
-    x = layers.LayerNormalization()(x + attn)
-    ffn = layers.Dense(128, activation="relu")(x)
-    ffn = layers.Dense(64)(ffn)
-    x = layers.LayerNormalization()(x + ffn)
-
-    x = layers.GlobalAveragePooling1D()(x)
-    x = layers.Dense(32, activation="relu")(x)
-    out = layers.Dense(1)(x)
-    model = keras.Model(inp, out)
-    model.compile(optimizer=keras.optimizers.Adam(5e-4), loss="mse", metrics=["mae"])
-    return model
-
-
-def get_model_specs(input_shape: tuple[int, int]) -> list[dict[str, Any]]:
-    return [
-        {
-            "name": "CNN-LSTM",
-            "slug": "cnn_lstm",
-            "build_fn": lambda: build_cnn_lstm(input_shape),
-            "notes": "1D causal CNN (dilated) → LSTM",
-        },
-        {
-            "name": "CNN-GRU",
-            "slug": "cnn_gru",
-            "build_fn": lambda: build_cnn_gru(input_shape),
-            "notes": "1D causal CNN (dilated) → GRU",
-        },
-        {
-            "name": "Attention LSTM",
-            "slug": "attention_lstm",
-            "build_fn": lambda: build_attention_lstm(input_shape),
-            "notes": "LSTM + Bahdanau additive attention",
-        },
-        {
-            "name": "Attention BiLSTM",
-            "slug": "attention_bilstm",
-            "build_fn": lambda: build_attention_bilstm(input_shape),
-            "notes": "Bidirectional LSTM + Bahdanau attention",
-        },
-        {
-            "name": "Transformer (4-head)",
-            "slug": "transformer_4h",
-            "build_fn": lambda: build_transformer(input_shape, d_model=64, num_heads=4, ff_dim=128),
-            "notes": "Simplified temporal transformer, 2 encoder blocks",
-        },
-        {
-            "name": "WaveNet Dilated CNN",
-            "slug": "wavenet_cnn",
-            "build_fn": lambda: build_wavenet_cnn(input_shape),
-            "notes": "Gated dilated causal convolutions (WaveNet-style)",
-        },
-        {
-            "name": "TCN (Temporal Conv Net)",
-            "slug": "tcn",
-            "build_fn": lambda: build_tcn(input_shape),
-            "notes": "Residual dilated causal TCN",
-        },
-        {
-            "name": "CNN + Transformer",
-            "slug": "cnn_transformer",
-            "build_fn": lambda: build_cnn_transformer(input_shape),
-            "notes": "CNN local features + Transformer global attention",
-        },
-    ]
-
-
-def train_model(
-    spec: dict[str, Any],
-    X_train_seq: np.ndarray,
-    y_train_seq: np.ndarray,
-    X_test_seq: np.ndarray,
-) -> tuple[np.ndarray, dict[str, list[float]]]:
-    keras.backend.clear_session()
-    model = spec["build_fn"]()
-
-    n_val = int(len(X_train_seq) * 0.1)
-    X_val, y_val = X_train_seq[-n_val:], y_train_seq[-n_val:]
-    X_tr, y_tr = X_train_seq[:-n_val], y_train_seq[:-n_val]
-
-    cb_list = [
-        keras.callbacks.EarlyStopping(monitor="val_loss", patience=PATIENCE, restore_best_weights=True),
-        keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=10, min_lr=1e-6, verbose=0),
-    ]
-    hist = model.fit(
-        X_tr, y_tr,
-        validation_data=(X_val, y_val),
-        epochs=MAX_EPOCHS,
-        batch_size=BATCH_SIZE,
-        callbacks=cb_list,
-        verbose=0,
-        shuffle=False,
+def build_test_sequences(
+    train_features: np.ndarray,
+    test_features: np.ndarray,
+    train_targets: np.ndarray,
+    test_targets: np.ndarray,
+    lookback: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    combined_features = np.concatenate([train_features, test_features], axis=0).astype(
+        np.float32
     )
-    preds_scaled = model.predict(X_test_seq, verbose=0).ravel()
-    history = {k: [float(v) for v in vals] for k, vals in hist.history.items()}
-    return preds_scaled, history
+    combined_targets = np.concatenate([train_targets, test_targets], axis=0).astype(
+        np.float32
+    )
+    test_start = len(train_features)
+
+    X_values = []
+    y_values = []
+    for idx in range(test_start, len(combined_features)):
+        X_values.append(combined_features[idx - lookback : idx])
+        y_values.append(combined_targets[idx])
+
+    X_array = np.asarray(X_values, dtype=np.float32)
+    y_array = np.asarray(y_values, dtype=np.float32).reshape(-1)
+    return X_array, y_array
 
 
-def render_training_curve(result: AdvDLResult) -> None:
-    h = result.history
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-    axes[0].plot(h.get("loss", []), label="train")
-    axes[0].plot(h.get("val_loss", []), label="val")
-    axes[0].set_title(f"{result.name} — Loss")
-    axes[0].legend(); axes[0].grid(True, alpha=0.3)
-    axes[1].plot(h.get("mae", []), label="train")
-    axes[1].plot(h.get("val_mae", []), label="val")
-    axes[1].set_title(f"{result.name} — MAE")
-    axes[1].legend(); axes[1].grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"{result.slug}_training.png", dpi=100, bbox_inches="tight")
-    plt.close(fig)
+def temporal_train_validation_split(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    validation_fraction: float = VALIDATION_FRACTION,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    if not 0.0 < validation_fraction < 1.0:
+        raise ValueError("validation_fraction must be between 0 and 1.")
+
+    validation_size = max(1, int(len(X_train) * validation_fraction))
+    if validation_size >= len(X_train):
+        raise ValueError("validation split leaves no training samples.")
+
+    split_index = len(X_train) - validation_size
+    return (
+        X_train[:split_index],
+        X_train[split_index:],
+        y_train[:split_index],
+        y_train[split_index:],
+    )
 
 
-def render_forecast_plot(test_dates: pd.DatetimeIndex, y_test: np.ndarray, result: AdvDLResult) -> None:
-    fig, axes = plt.subplots(2, 1, figsize=(14, 7))
-    axes[0].plot(test_dates, y_test, color="#2ca02c", lw=1.5, label="Actual")
-    axes[0].plot(test_dates, result.predictions, color="#d62728", lw=1.5, ls="--", label="Predicted")
-    axes[0].set_title(f"{result.name} — Test Forecast", fontsize=13)
-    axes[0].legend(fontsize=10); axes[0].grid(True, alpha=0.3)
-    m = result.metrics
-    axes[0].set_xlabel(f"MAE={m['mae']:.4f}  RMSE={m['rmse']:.4f}  R²={m['r2']:.4f}  DA={m['directional_accuracy']:.1f}%")
-    residuals = y_test - result.predictions
-    axes[1].bar(test_dates, residuals, color=["#d62728" if r < 0 else "#2ca02c" for r in residuals], width=2, alpha=0.6)
-    axes[1].axhline(0, color="black", lw=0.8)
-    axes[1].set_title("Residuals"); axes[1].grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"{result.slug}_forecast.png", dpi=120, bbox_inches="tight")
-    plt.close(fig)
+def compile_model(model: keras.Model) -> keras.Model:
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss="mse",
+    )
+    return model
 
 
-def render_comparison_plot(results: list[AdvDLResult], y_test: np.ndarray, test_dates: pd.DatetimeIndex) -> None:
-    fig, ax = plt.subplots(figsize=(16, 6))
-    ax.plot(test_dates, y_test, color="black", lw=2, label="Actual", zorder=5)
-    colors = plt.cm.tab10(np.linspace(0, 1, len(results)))
-    for res, color in zip(results, colors):
-        ax.plot(test_dates, res.predictions, lw=1, ls="--", color=color,
-                label=f"{res.name} (MAE={res.metrics['mae']:.4f})", alpha=0.85)
-    ax.set_title("Advanced DL Models — All Predictions vs Actual", fontsize=14)
-    ax.legend(fontsize=7, ncol=2, loc="upper left"); ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / "adv_dl_comparison_all.png", dpi=120, bbox_inches="tight")
-    plt.close(fig)
+def build_cnn_lstm_model(input_shape: tuple[int, int]) -> keras.Model:
+    inputs = layers.Input(shape=input_shape)
+    x = layers.Conv1D(64, kernel_size=3, activation="relu")(inputs)
+    x = layers.MaxPooling1D(pool_size=2)(x)
+    x = layers.LSTM(64)(x)
+    outputs = layers.Dense(1)(x)
+    model = keras.Model(inputs=inputs, outputs=outputs, name="cnn_lstm")
+    return compile_model(model)
 
 
-def save_leaderboard(results: list[AdvDLResult]) -> pd.DataFrame:
-    rows = [{"model": r.name, "slug": r.slug, **r.metrics} for r in results]
-    df = pd.DataFrame(rows).sort_values("mae")
-    df.to_csv(RESULTS_DIR / "adv_dl_leaderboard.csv", index=False)
-    return df
+def build_attention_lstm_model(input_shape: tuple[int, int]) -> keras.Model:
+    inputs = layers.Input(shape=input_shape)
+    x = layers.LSTM(64, return_sequences=True)(inputs)
+    x = DotProductAttention(name="dot_product_attention")(x)
+    x = layers.GlobalAveragePooling1D()(x)
+    outputs = layers.Dense(1)(x)
+    model = keras.Model(inputs=inputs, outputs=outputs, name="attention_lstm")
+    return compile_model(model)
 
 
-def format_leaderboard_md(df: pd.DataFrame) -> str:
-    header = "| # | Model | MAE | RMSE | MAPE | SMAPE | R² | DA% |"
-    sep = "|---|-------|-----|------|------|-------|-----|-----|"
-    lines = [header, sep]
-    for i, row in enumerate(df.itertuples(), 1):
+def build_temporal_transformer_model(input_shape: tuple[int, int]) -> keras.Model:
+    inputs = layers.Input(shape=input_shape)
+    attention_output = layers.MultiHeadAttention(
+        num_heads=2,
+        key_dim=32,
+        name="multi_head_attention",
+    )(inputs, inputs)
+    x = layers.Add()([inputs, attention_output])
+    x = layers.LayerNormalization(name="attention_layer_norm")(x)
+    x = layers.Dense(64, activation="relu", name="feed_forward")(x)
+    x = layers.GlobalAveragePooling1D()(x)
+    outputs = layers.Dense(1)(x)
+    model = keras.Model(
+        inputs=inputs,
+        outputs=outputs,
+        name="temporal_transformer",
+    )
+    return compile_model(model)
+
+
+def get_model_specs() -> list[ModelSpec]:
+    return [
+        ModelSpec(
+            model_name="CNN-LSTM",
+            slug="cnn_lstm",
+            factory=build_cnn_lstm_model,
+        ),
+        ModelSpec(
+            model_name="Attention LSTM",
+            slug="attention_lstm",
+            factory=build_attention_lstm_model,
+        ),
+        ModelSpec(
+            model_name="Temporal Transformer",
+            slug="temporal_transformer",
+            factory=build_temporal_transformer_model,
+        ),
+    ]
+
+
+def inverse_transform_target(values: np.ndarray, target_scaler: Any) -> np.ndarray:
+    return target_scaler.inverse_transform(
+        np.asarray(values, dtype=np.float64).reshape(-1, 1)
+    ).reshape(-1)
+
+
+def save_predictions(
+    slug: str,
+    dates: pd.DatetimeIndex,
+    actual: np.ndarray,
+    predicted: np.ndarray,
+) -> Path:
+    frame = pd.DataFrame(
+        {
+            "date": dates,
+            "actual": actual,
+            "prediction": predicted,
+            "residual": actual - predicted,
+            "abs_error": np.abs(actual - predicted),
+        }
+    )
+    output_path = PREDICTIONS_DIR / f"{slug}_predictions.csv"
+    frame.to_csv(output_path, index=False)
+    return output_path
+
+
+def save_architecture_summary(
+    model: keras.Model,
+    spec: ModelSpec,
+) -> Path:
+    input_shape = tuple(int(dim) if dim is not None else -1 for dim in model.input_shape[1:])
+    lines = [
+        f"Model: {spec.model_name}",
+        f"Slug: {spec.slug}",
+        f"Input shape: {input_shape}",
+        (
+            "Training config: "
+            f"Adam(lr={LEARNING_RATE}), loss=mse, epochs={EPOCHS}, "
+            f"batch_size={BATCH_SIZE}, early_stopping_patience={EARLY_STOPPING_PATIENCE}"
+        ),
+        "",
+        "Keras summary:",
+    ]
+    model.summary(print_fn=lines.append)
+    output_path = RESULTS_ROOT / f"{spec.slug}_architecture.txt"
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output_path
+
+
+def build_results_frame(results: list[ModelResult]) -> pd.DataFrame:
+    rows = []
+    for result in results:
+        rows.append(
+            {
+                "model_name": result.model_name,
+                "slug": result.slug,
+                "MAE": result.metrics["MAE"],
+                "RMSE": result.metrics["RMSE"],
+                "MAPE": result.metrics["MAPE"],
+                "R2": result.metrics["R2"],
+                "SMAPE": result.metrics["SMAPE"],
+                "predictions_path": result.predictions_path.relative_to(PROJECT_ROOT).as_posix(),
+                "architecture_path": result.architecture_path.relative_to(PROJECT_ROOT).as_posix(),
+                "epochs_trained": len(result.history.get("loss", [])),
+            }
+        )
+    return (
+        pd.DataFrame(rows)
+        .sort_values(["RMSE", "MAE", "MAPE"], ascending=True)
+        .reset_index(drop=True)
+    )
+
+
+def format_metrics_table(results_frame: pd.DataFrame) -> str:
+    lines = [
+        "| # | Model | MAE | RMSE | MAPE (%) | SMAPE (%) | R^2 | Epochs |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for idx, row in enumerate(results_frame.itertuples(index=False), start=1):
         lines.append(
-            f"| {i} | {row.model} | {row.mae:.4f} | {row.rmse:.4f} | "
-            f"{row.mape:.2f} | {row.smape:.2f} | {row.r2:.4f} | {row.directional_accuracy:.1f}% |"
+            f"| {idx} | {row.model_name} | {row.MAE:.4f} | {row.RMSE:.4f} | "
+            f"{row.MAPE:.4f} | {row.SMAPE:.4f} | {row.R2:.4f} | {row.epochs_trained} |"
         )
     return "\n".join(lines)
 
 
-def upsert_research_log_section(section: str) -> None:
-    import re
-    log = RESEARCH_LOG_PATH.read_text(encoding="utf-8") if RESEARCH_LOG_PATH.exists() else ""
-    if LOG_SECTION_HEADER in log:
-        before, _, after = log.partition(LOG_SECTION_HEADER)
-        after_trimmed = re.sub(r".*?(?=\n## |\Z)", "", after, count=1, flags=re.DOTALL)
-        content = before.rstrip() + "\n\n" + section + "\n" + after_trimmed
-    else:
-        content = log.rstrip() + "\n\n" + section + "\n"
-    RESEARCH_LOG_PATH.write_text(content, encoding="utf-8")
+def build_research_log_section(
+    results_frame: pd.DataFrame,
+    payload: dict[str, Any],
+) -> str:
+    best_row = results_frame.iloc[0]
+    worst_row = results_frame.iloc[-1]
+    train_index = payload["train_index"]
+    test_index = payload["test_index"]
+    train_sequence_count = len(payload["X_train_full"])
+    validation_size = len(payload["X_val"])
+    feature_count = payload["X_train"].shape[-1]
 
-
-def build_research_log_section(df: pd.DataFrame) -> str:
-    best = df.iloc[0]
-    section_lines = [
+    lines = [
         LOG_SECTION_HEADER,
         "",
-        "### Experimental Setup",
-        f"- Sequence length: {SEQUENCE_LENGTH} timesteps",
-        "- Same MinMaxScaler features as RNN models for direct comparability",
-        "- CNN-LSTM/GRU: causal dilated convolutions extract local patterns, recurrent layers capture temporal dependencies",
-        "- Attention models: LSTM/BiLSTM hidden states weighted by additive attention for interpretable focus",
-        "- Transformer: sinusoidal positional encoding + 2 multi-head self-attention encoder blocks",
-        "- WaveNet: gated dilated causal conv (dilations 1,2,4,8,16) with skip connections",
-        "- TCN: residual dilated causal conv blocks (dilations 1,2,4,8)",
-        "- CNN+Transformer: hybrid local-global architecture",
+        "### Evaluation Setup",
+        f"- Source arrays: `{payload['arrays_path'].relative_to(PROJECT_ROOT).as_posix()}`",
+        f"- Source scaler bundle: `{payload['scalers_path'].relative_to(PROJECT_ROOT).as_posix()}`",
+        f"- Train window: {train_index.min().date()} to {train_index.max().date()} ({len(train_index)} rows)",
+        f"- Test window: {test_index.min().date()} to {test_index.max().date()} ({len(test_index)} rows)",
+        (
+            f"- Inputs: {feature_count} MinMax-scaled DL features from `artifacts/preprocessed_arrays.joblib`, "
+            f"arranged as lookback-{LOOKBACK_WINDOW} sequences. Targets remain the scaled "
+            f"`{payload['target_name']}` series for inverse-transformed evaluation."
+        ),
+        (
+            f"- Training sequences: {train_sequence_count} total, with the last {validation_size} "
+            "sequences reserved as a temporal validation split."
+        ),
+        (
+            f"- Training config: Adam(lr={LEARNING_RATE}), MSE loss, epochs={EPOCHS}, "
+            f"batch_size={BATCH_SIZE}, EarlyStopping(patience={EARLY_STOPPING_PATIENCE}, "
+            "restore_best_weights=True)."
+        ),
+        "- Models evaluated: CNN-LSTM, Attention LSTM with custom dot-product attention, and a 2-head Temporal Transformer.",
         "",
-        "### Results Leaderboard",
+        "### Architecture Definitions",
+        "- CNN-LSTM: `Conv1D(64, kernel_size=3, activation='relu') -> MaxPooling1D(2) -> LSTM(64) -> Dense(1)`",
+        "- Attention LSTM: `LSTM(64, return_sequences=True) -> DotProductAttention -> GlobalAveragePooling1D -> Dense(1)`",
+        "- Temporal Transformer: `MultiHeadAttention(num_heads=2, key_dim=32) -> Add + LayerNormalization -> Dense(64, relu) -> GlobalAveragePooling1D -> Dense(1)`",
         "",
-        format_leaderboard_md(df),
+        "### Test Metrics",
+        format_metrics_table(results_frame),
         "",
-        "### Researcher Notes",
-        f"- Best advanced DL model: **{best.model}** — MAE={best.mae:.4f}, RMSE={best.rmse:.4f}, R²={best.r2:.4f}",
-        "- Attention mechanisms allow inspection of which timesteps matter most for forecasting.",
-        "- Transformer may under-perform on small datasets compared to recurrent models due to sample efficiency.",
-        "- WaveNet/TCN offer strong inductive bias for sequential data without recurrence.",
+        "### Findings",
+        (
+            f"- Best advanced DL model by RMSE: `{best_row.model_name}` with "
+            f"RMSE={best_row.RMSE:.4f}, MAE={best_row.MAE:.4f}, and R^2={best_row.R2:.4f}."
+        ),
+        (
+            f"- Weakest advanced DL model by RMSE: `{worst_row.model_name}` with "
+            f"RMSE={worst_row.RMSE:.4f}."
+        ),
+        "- All three models were trained on the same MinMax-scaled multivariate feature windows, so the differences reflect architecture choice rather than data leakage or split changes.",
+        "- Prediction CSVs were written to `results/predictions/dl_advanced/`, architecture summaries were written to `results/*.txt`, and metrics were logged through `utils/metrics_tracker.py`.",
         "",
         "### Saved Artifacts",
-        "- `results/dl_advanced/<slug>_predictions.csv`",
-        "- `results/dl_advanced/adv_dl_leaderboard.csv`",
-        "- `plots/dl_advanced/<slug>_forecast.png`",
-        "- `plots/dl_advanced/adv_dl_comparison_all.png`",
+        "- `src/models/dl_advanced_models.py`",
+        "- `results/predictions/dl_advanced/*.csv`",
+        "- `results/*_architecture.txt`",
+        "- `results/metrics_registry.csv`",
     ]
-    return "\n".join(section_lines)
+    return "\n".join(lines)
+
+
+def upsert_research_log(section_text: str) -> None:
+    current_text = (
+        RESEARCH_LOG_PATH.read_text(encoding="utf-8")
+        if RESEARCH_LOG_PATH.exists()
+        else ""
+    )
+    pattern = rf"{re.escape(LOG_SECTION_HEADER)}.*?(?=\n## |\Z)"
+
+    if re.search(pattern, current_text, flags=re.DOTALL):
+        updated_text = re.sub(
+            pattern,
+            section_text.rstrip(),
+            current_text,
+            count=1,
+            flags=re.DOTALL,
+        )
+    else:
+        separator = "\n\n" if current_text.strip() else ""
+        updated_text = f"{current_text.rstrip()}{separator}{section_text.rstrip()}\n"
+
+    RESEARCH_LOG_PATH.write_text(updated_text.rstrip() + "\n", encoding="utf-8")
+
+
+def train_single_model(
+    spec: ModelSpec,
+    payload: dict[str, Any],
+) -> ModelResult:
+    from utils.metrics_tracker import compute_metrics, log_result
+
+    tf.keras.backend.clear_session()
+    tf.keras.utils.set_random_seed(SEED)
+
+    model = spec.factory((LOOKBACK_WINDOW, payload["X_train"].shape[-1]))
+    architecture_path = save_architecture_summary(model, spec)
+
+    early_stopping = callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=EARLY_STOPPING_PATIENCE,
+        restore_best_weights=True,
+    )
+
+    history = model.fit(
+        payload["X_train"],
+        payload["y_train"],
+        validation_data=(payload["X_val"], payload["y_val"]),
+        epochs=EPOCHS,
+        batch_size=BATCH_SIZE,
+        callbacks=[early_stopping],
+        verbose=0,
+        shuffle=False,
+    )
+
+    predicted_scaled = model.predict(payload["X_test"], verbose=0).reshape(-1)
+    predicted_actual = inverse_transform_target(
+        predicted_scaled,
+        payload["target_scaler"],
+    )
+    predictions_path = save_predictions(
+        slug=spec.slug,
+        dates=payload["test_index"],
+        actual=payload["test_actual"],
+        predicted=predicted_actual,
+    )
+    metrics = compute_metrics(payload["test_actual"], predicted_actual)
+    log_result("dl_advanced", spec.model_name, metrics, predictions_path)
+
+    history_dict = {
+        key: [float(value) for value in values]
+        for key, values in history.history.items()
+    }
+
+    return ModelResult(
+        model_name=spec.model_name,
+        slug=spec.slug,
+        metrics=metrics,
+        predictions_path=predictions_path,
+        architecture_path=architecture_path,
+        history=history_dict,
+    )
+
+
+def prepare_payload(raw_payload: dict[str, Any]) -> dict[str, Any]:
+    X_train_full, y_train_full = build_feature_sequences(
+        raw_payload["train_feature_scaled"],
+        raw_payload["train_target_scaled"],
+        LOOKBACK_WINDOW,
+    )
+    X_test, y_test_scaled = build_test_sequences(
+        raw_payload["train_feature_scaled"],
+        raw_payload["test_feature_scaled"],
+        raw_payload["train_target_scaled"],
+        raw_payload["test_target_scaled"],
+        LOOKBACK_WINDOW,
+    )
+    X_train, X_val, y_train, y_val = temporal_train_validation_split(
+        X_train_full,
+        y_train_full,
+    )
+
+    if len(X_test) != len(raw_payload["test_actual"]):
+        raise ValueError(
+            "Test sequence count does not align with test targets: "
+            f"{len(X_test)} sequences vs {len(raw_payload['test_actual'])} targets."
+        )
+
+    if len(y_test_scaled) != len(raw_payload["test_actual"]):
+        raise ValueError(
+            "Scaled test target count does not align with raw test targets: "
+            f"{len(y_test_scaled)} vs {len(raw_payload['test_actual'])}."
+        )
+
+    return {
+        **raw_payload,
+        "X_train_full": X_train_full,
+        "y_train_full": y_train_full,
+        "X_train": X_train,
+        "X_val": X_val,
+        "y_train": y_train,
+        "y_val": y_val,
+        "X_test": X_test,
+        "y_test_scaled": y_test_scaled,
+    }
 
 
 def run_all_advanced_dl_models() -> pd.DataFrame:
-    print("=" * 60)
-    print("ADVANCED DL MODELS ABLATION STUDY")
-    print("=" * 60)
     ensure_dirs()
-    data = load_artifacts()
+    payload = prepare_payload(load_inputs())
 
-    dl_scalers = data["dl_scalers"]
-    X_train_dl = data["X_train_dl_scaled"].astype(np.float32)
-    X_test_dl = data["X_test_dl_scaled"].astype(np.float32)
-    y_train_dl = data["y_train_dl_scaled"].astype(np.float32)
-    y_test_raw = data["y_test"].astype(np.float32)
-    y_train_raw = data["y_train"].astype(np.float32)
-    test_index = data["test_index"]
-
-    X_train_seq, y_train_seq = build_sequences(X_train_dl, y_train_dl, SEQUENCE_LENGTH)
-
-    combined_X = np.vstack([X_train_dl, X_test_dl])
-    combined_y_raw = np.concatenate([y_train_raw, y_test_raw])
-    combined_y_dl = np.concatenate([y_train_dl, data["y_test_dl_scaled"].astype(np.float32)])
-    test_start_idx = len(X_train_dl)
-    X_test_seq = np.array([
-        combined_X[i - SEQUENCE_LENGTH:i]
-        for i in range(test_start_idx, len(combined_X))
-    ], dtype=np.float32)
-    y_test_raw_seq = combined_y_raw[test_start_idx:]
-
-    test_dates = pd.to_datetime(test_index)
-    y_train_last = float(y_train_raw[-1])
-    prev_actual = np.concatenate(([y_train_last], y_test_raw_seq[:-1]))
-
-    n_features = X_train_dl.shape[1]
-    input_shape = (SEQUENCE_LENGTH, n_features)
-    specs = get_model_specs(input_shape)
-    results: list[AdvDLResult] = []
-
-    for spec in specs:
-        print(f"\n  Training: {spec['name']}")
-        preds_scaled, history = train_model(spec, X_train_seq, y_train_seq, X_test_seq)
-        preds_raw = inverse_transform_target(preds_scaled, dl_scalers)
-        metrics = compute_metrics(y_test_raw_seq, preds_raw, prev_actual)
-
-        result = AdvDLResult(
-            name=spec["name"],
-            slug=spec["slug"],
-            predictions=preds_raw,
-            metrics=metrics,
-            history=history,
-            config={"seq_len": SEQUENCE_LENGTH, "input_shape": list(input_shape)},
-            notes=spec["notes"],
-        )
+    results: list[ModelResult] = []
+    for spec in get_model_specs():
+        result = train_single_model(spec, payload)
         results.append(result)
 
-        df_pred = pd.DataFrame({
-            "date": test_dates,
-            "actual": y_test_raw_seq,
-            "predicted": preds_raw,
-            "error": y_test_raw_seq - preds_raw,
-        })
-        df_pred.to_csv(RESULTS_DIR / f"{spec['slug']}_predictions.csv", index=False)
+    results_frame = build_results_frame(results)
+    upsert_research_log(build_research_log_section(results_frame, payload))
+    return results_frame
 
-        render_training_curve(result)
-        render_forecast_plot(test_dates, y_test_raw_seq, result)
 
-        print(f"    MAE={metrics['mae']:.4f}  RMSE={metrics['rmse']:.4f}  R²={metrics['r2']:.4f}  DA={metrics['directional_accuracy']:.1f}%  Epochs={len(history.get('loss', []))}")
-
-    metrics_all = {r.slug: r.metrics for r in results}
-    (RESULTS_DIR / "adv_dl_all_metrics.json").write_text(json.dumps(metrics_all, indent=2), encoding="utf-8")
-
-    leaderboard = save_leaderboard(results)
-    render_comparison_plot(results, y_test_raw_seq, test_dates)
-    section = build_research_log_section(leaderboard)
-    upsert_research_log_section(section)
-
-    print("\n" + "=" * 60)
-    print("ADVANCED DL LEADERBOARD (sorted by MAE)")
-    print("=" * 60)
-    print(leaderboard[["model", "mae", "rmse", "r2", "directional_accuracy"]].to_string(index=False))
-    print(f"\nArtifacts saved to: {RESULTS_DIR}")
-    return leaderboard
+def main() -> None:
+    summary = run_all_advanced_dl_models()
+    print(summary.to_string(index=False))
 
 
 if __name__ == "__main__":
-    run_all_advanced_dl_models()
+    main()
