@@ -29,6 +29,8 @@ import pickle
 # ============================================================================
 
 PROXY_COLUMNS = ["ILLIQ_t", "DEPTH_t", "IMMED_t", "REV_t"]
+NIFTY_START_DATE = pd.Timestamp("2013-01-01")
+PLOT_SMOOTH_WINDOW = 21
 
 
 def _normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
@@ -447,6 +449,12 @@ def load_and_prepare_nifty50(csv_path: str | Path) -> pd.DataFrame:
 		df[col] = pd.to_numeric(df[col], errors='coerce')
 
 	df = df.dropna(subset=['DATE', 'CLOSE']).sort_values('DATE').reset_index(drop=True)
+	df = df[df['DATE'] >= NIFTY_START_DATE].reset_index(drop=True)
+	df = df[df['VOLUME'] > 0].reset_index(drop=True)
+	if df.empty:
+		raise ValueError(
+			f"No NIFTY50 rows with positive volume available on/after {NIFTY_START_DATE.date()}"
+		)
 	df['SYMBOL'] = 'NIFTY50'
 	return df
 
@@ -650,6 +658,9 @@ def compare_indices(
 		on='DATE',
 		how='inner'
 	)
+	comparison_df = comparison_df.sort_values('DATE').reset_index(drop=True)
+	comparison_df['Market_Index_Smoothed'] = _smooth_series_for_plot(comparison_df['Market_Liquidity_Index'])
+	comparison_df['NIFTY50_Index_Smoothed'] = _smooth_series_for_plot(comparison_df['NIFTY50_Index'])
 	
 	print(f"\nCommon dates for comparison: {len(comparison_df)}")
 	print(f"Date range: {comparison_df['DATE'].min()} to {comparison_df['DATE'].max()}")
@@ -674,13 +685,13 @@ def compare_indices(
 	# Essential visualization: normalized overlaid comparison.
 	fig, ax = plt.subplots(figsize=(14, 6))
 	
-	# Normalize both indices for direct comparison
-	market_norm = (comparison_df['Market_Liquidity_Index'] - comparison_df['Market_Liquidity_Index'].mean()) / comparison_df['Market_Liquidity_Index'].std()
-	nifty50_norm = (comparison_df['NIFTY50_Index'] - comparison_df['NIFTY50_Index'].mean()) / comparison_df['NIFTY50_Index'].std()
+	# Normalize smoothed series for a cleaner visual comparison.
+	market_norm = _zscore_series(comparison_df['Market_Index_Smoothed'])
+	nifty50_norm = _zscore_series(comparison_df['NIFTY50_Index_Smoothed'])
 	
 	ax.plot(comparison_df['DATE'], market_norm, label='Market Index (Normalized)', linewidth=1.5)
 	ax.plot(comparison_df['DATE'], nifty50_norm, label='NIFTY50 Index (Normalized)', linewidth=1.5)
-	ax.set_title('Normalized Liquidity Index Comparison: Market vs NIFTY50', fontsize=13, fontweight='bold')
+	ax.set_title('Normalized Liquidity Index Comparison (21D Smoothed): Market vs NIFTY50', fontsize=13, fontweight='bold')
 	ax.set_xlabel('Date')
 	ax.set_ylabel('Normalized Index')
 	ax.legend(fontsize=11)
@@ -715,7 +726,9 @@ def part2_creating_nifty50_composite_index() -> pd.DataFrame:
 	print("="*80)
 	
 	project_root = Path(__file__).parent.parent
-	nifty50_raw_path = project_root / 'NIFTY50.csv'
+	nifty50_raw_path = project_root / 'Code' / 'NIFTY50.csv'
+	if not nifty50_raw_path.exists():
+		nifty50_raw_path = project_root / 'NIFTY50.csv'
 	nifty50_proxies_path = project_root / 'Code' / 'nifty50_liquidity_proxies.csv'
 	market_index_path = project_root / 'Code' / 'market_liquidity_index.csv'
 	output_path = project_root / 'Code' / 'nifty50_liquidity_index.csv'
@@ -729,7 +742,7 @@ def part2_creating_nifty50_composite_index() -> pd.DataFrame:
 	# Compute NIFTY50 proxies from raw index CSV.
 	print(f"\nLoading raw NIFTY50 data from: {nifty50_raw_path}")
 	nifty50_ohlcv = load_and_prepare_nifty50(nifty50_raw_path)
-	print(f"Loaded {len(nifty50_ohlcv)} cleaned rows")
+	print(f"Loaded {len(nifty50_ohlcv)} cleaned rows from {nifty50_ohlcv['DATE'].min().date()} onward")
 
 	nifty50_proxies = compute_nifty50_liquidity_proxies(nifty50_ohlcv, drop_na_rows=True)
 	nifty50_proxies.to_csv(nifty50_proxies_path, index=False)
@@ -958,20 +971,23 @@ def plot_top100_vs_nifty50(
 
 	merged = pd.merge(lhs, rhs, on="DATE", how="inner")
 	merged = merged.dropna(subset=["Top100_Liquidity_Index", "NIFTY50_Liquidity_Index"])
+	merged = merged.sort_values("DATE").reset_index(drop=True)
+	merged["Top100_Index_Smoothed"] = _smooth_series_for_plot(merged["Top100_Liquidity_Index"])
+	merged["NIFTY50_Index_Smoothed"] = _smooth_series_for_plot(merged["NIFTY50_Liquidity_Index"])
 
-	top_std = merged["Top100_Liquidity_Index"].std(ddof=0)
-	nifty_std = merged["NIFTY50_Liquidity_Index"].std(ddof=0)
+	top_std = merged["Top100_Index_Smoothed"].std(ddof=0)
+	nifty_std = merged["NIFTY50_Index_Smoothed"].std(ddof=0)
 
 	if pd.notna(top_std) and top_std > 0:
 		merged["Top100_Normalized"] = (
-			merged["Top100_Liquidity_Index"] - merged["Top100_Liquidity_Index"].mean()
+			merged["Top100_Index_Smoothed"] - merged["Top100_Index_Smoothed"].mean()
 		) / top_std
 	else:
 		merged["Top100_Normalized"] = np.nan
 
 	if pd.notna(nifty_std) and nifty_std > 0:
 		merged["NIFTY50_Normalized"] = (
-			merged["NIFTY50_Liquidity_Index"] - merged["NIFTY50_Liquidity_Index"].mean()
+			merged["NIFTY50_Index_Smoothed"] - merged["NIFTY50_Index_Smoothed"].mean()
 		) / nifty_std
 	else:
 		merged["NIFTY50_Normalized"] = np.nan
@@ -979,7 +995,7 @@ def plot_top100_vs_nifty50(
 	plt.figure(figsize=(14, 6))
 	plt.plot(merged["DATE"], merged["Top100_Normalized"], label="Top100 Index (Normalized)", linewidth=1.5)
 	plt.plot(merged["DATE"], merged["NIFTY50_Normalized"], label="NIFTY50 Index (Normalized)", linewidth=1.5)
-	plt.title("Normalized Liquidity Index Comparison: Top100 vs NIFTY50", fontsize=13, fontweight="bold")
+	plt.title("Normalized Liquidity Index Comparison (21D Smoothed): Top100 vs NIFTY50", fontsize=13, fontweight="bold")
 	plt.xlabel("Date")
 	plt.ylabel("Normalized Index")
 	plt.legend(fontsize=11)
@@ -1000,6 +1016,12 @@ def _zscore_series(series: pd.Series) -> pd.Series:
 	return pd.Series(np.nan, index=series.index)
 
 
+def _smooth_series_for_plot(series: pd.Series, window: int = PLOT_SMOOTH_WINDOW) -> pd.Series:
+	"""Return a rolling-mean smoothed series for cleaner visual interpretation."""
+	min_periods = max(5, window // 3)
+	return series.rolling(window=window, min_periods=min_periods).mean()
+
+
 def plot_all_three_and_pairs(
 	market_index_df: pd.DataFrame,
 	nifty50_index_df: pd.DataFrame,
@@ -1016,9 +1038,15 @@ def plot_all_three_and_pairs(
 		df.dropna(subset=["DATE"], inplace=True)
 		df.sort_values("DATE", inplace=True)
 
-	market["Market_Z"] = _zscore_series(market["Market_Liquidity_Index"])
-	nifty["NIFTY50_Z"] = _zscore_series(nifty["NIFTY50_Liquidity_Index"])
-	top["Top100_Z"] = _zscore_series(top["Top100_Liquidity_Index"])
+	# Use the same timeline for all panels based on NIFTY's post-2013 window.
+	analysis_start = max(NIFTY_START_DATE, nifty["DATE"].min())
+	market = market[market["DATE"] >= analysis_start].copy()
+	nifty = nifty[nifty["DATE"] >= analysis_start].copy()
+	top = top[top["DATE"] >= analysis_start].copy()
+
+	market["Market_Z"] = _zscore_series(_smooth_series_for_plot(market["Market_Liquidity_Index"]))
+	nifty["NIFTY50_Z"] = _zscore_series(_smooth_series_for_plot(nifty["NIFTY50_Liquidity_Index"]))
+	top["Top100_Z"] = _zscore_series(_smooth_series_for_plot(top["Top100_Liquidity_Index"]))
 
 	mn = pd.merge(market[["DATE", "Market_Z"]], nifty[["DATE", "NIFTY50_Z"]], on="DATE", how="inner")
 	mt = pd.merge(market[["DATE", "Market_Z"]], top[["DATE", "Top100_Z"]], on="DATE", how="inner")
@@ -1072,7 +1100,7 @@ def plot_all_three_and_pairs(
 	axes[1, 0].set_xlabel("Date")
 	axes[1, 1].set_xlabel("Date")
 
-	plt.suptitle("Liquidity Indices: Individuals and Pairwise Comparisons", fontsize=15, fontweight="bold")
+	plt.suptitle("Liquidity Indices (21D Smoothed): Individuals and Pairwise Comparisons", fontsize=15, fontweight="bold")
 	plt.tight_layout(rect=[0, 0, 1, 0.97])
 	output_path.parent.mkdir(parents=True, exist_ok=True)
 	plt.savefig(output_path, dpi=150)

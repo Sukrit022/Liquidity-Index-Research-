@@ -17,6 +17,9 @@ from sklearn.preprocessing import StandardScaler
 import pickle
 
 
+NIFTY_START_DATE = pd.Timestamp("2013-01-01")
+
+
 def _winsorize_columns(
 	df: pd.DataFrame,
 	columns: list[str],
@@ -58,6 +61,12 @@ def load_and_prepare_nifty50(csv_path: str | Path) -> pd.DataFrame:
 		df[col] = pd.to_numeric(df[col], errors='coerce')
 
 	df = df.dropna(subset=['DATE', 'CLOSE']).sort_values('DATE').reset_index(drop=True)
+	df = df[df['DATE'] >= NIFTY_START_DATE].reset_index(drop=True)
+	df = df[df['VOLUME'] > 0].reset_index(drop=True)
+	if df.empty:
+		raise ValueError(
+			f"No NIFTY50 rows with positive volume available on/after {NIFTY_START_DATE.date()}"
+		)
 	df['SYMBOL'] = 'NIFTY50'
 	return df
 
@@ -319,7 +328,9 @@ def compare_indices(
 def main():
 	"""Main execution: compute proxies, create NIFTY50 PCA index, and compare."""
 	project_root = Path(__file__).parent.parent
-	nifty50_raw_path = project_root / 'NIFTY50.csv'
+	nifty50_raw_path = project_root / 'Code' / 'NIFTY50.csv'
+	if not nifty50_raw_path.exists():
+		nifty50_raw_path = project_root / 'NIFTY50.csv'
 	nifty50_proxies_path = project_root / 'Code' / 'nifty50_liquidity_proxies.csv'
 	market_index_path = project_root / 'Code' / 'market_liquidity_index.csv'
 	output_path = project_root / 'Code' / 'nifty50_liquidity_index.csv'
@@ -333,7 +344,7 @@ def main():
 	# Compute NIFTY50 proxies from raw index CSV.
 	print(f"\nLoading raw NIFTY50 data from: {nifty50_raw_path}")
 	nifty50_ohlcv = load_and_prepare_nifty50(nifty50_raw_path)
-	print(f"Loaded {len(nifty50_ohlcv)} cleaned rows")
+	print(f"Loaded {len(nifty50_ohlcv)} cleaned rows from {nifty50_ohlcv['DATE'].min().date()} onward")
 
 	nifty50_proxies = compute_nifty50_liquidity_proxies(nifty50_ohlcv, drop_na_rows=True)
 	nifty50_proxies.to_csv(nifty50_proxies_path, index=False)
