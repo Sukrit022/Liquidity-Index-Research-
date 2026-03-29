@@ -282,14 +282,7 @@ def construct_market_liquidity_index(
 		loadings = -loadings
 		market_index_df["Market_Liquidity_Index_Raw"] = -market_index_df["Market_Liquidity_Index_Raw"]
 
-	# Step 9: Optional smoothing (backward-looking only, no forward bias).
-	market_index_df["Market_Liquidity_Index_30D"] = (
-		market_index_df["Market_Liquidity_Index_Raw"]
-		.rolling(window=30, min_periods=10)
-		.mean()
-	)
-
-	# Step 10: Final normalization over time (z-score).
+	# Step 9: Final normalization over time (z-score).
 	mean_raw = market_index_df["Market_Liquidity_Index_Raw"].mean()
 	std_raw = market_index_df["Market_Liquidity_Index_Raw"].std(ddof=0)
 	if pd.notna(std_raw) and std_raw > 0:
@@ -315,7 +308,7 @@ def construct_market_liquidity_index(
 		}
 	)
 
-	return stock_scores_df, market_index_df[["DATE", "Market_Liquidity_Index", "Market_Liquidity_Index_30D"]].copy(), proxy_weights_df
+	return stock_scores_df, market_index_df[["DATE", "Market_Liquidity_Index"]].copy(), proxy_weights_df
 
 
 def plot_market_liquidity_index(market_index_df: pd.DataFrame, plot_path: Path) -> None:
@@ -336,24 +329,6 @@ def plot_market_liquidity_index(market_index_df: pd.DataFrame, plot_path: Path) 
 	plt.close()
 
 
-def plot_market_liquidity_index_rolling(market_index_df: pd.DataFrame, plot_path: Path) -> None:
-	"""Plot 30-day rolling market liquidity index for cleaner trend view."""
-	plot_df = market_index_df.copy()
-	plot_df["DATE"] = pd.to_datetime(plot_df["DATE"], errors="coerce")
-	plot_df = plot_df.dropna(subset=["DATE", "Market_Liquidity_Index_30D"]).sort_values("DATE")
-
-	plt.figure(figsize=(12, 5))
-	plt.plot(plot_df["DATE"], plot_df["Market_Liquidity_Index_30D"], linewidth=1.5, color="tab:orange")
-	plt.title("Market Liquidity Index (30-Day Rolling Average)")
-	plt.xlabel("DATE")
-	plt.ylabel("Market Liquidity Index (30D)")
-	plt.grid(True, alpha=0.3)
-	plt.tight_layout()
-	plot_path.parent.mkdir(parents=True, exist_ok=True)
-	plt.savefig(plot_path, dpi=150)
-	plt.close()
-
-
 def main() -> None:
 	"""
 	Example runner:
@@ -362,12 +337,12 @@ def main() -> None:
 	- Writes output CSV in the same folder as this script.
 	"""
 	code_dir = Path(__file__).resolve().parent
+	plots_dir = code_dir / "plots"
 	input_path = code_dir / "combined_nse_daily_data.csv"
 	proxy_output_path = code_dir / "daily_liquidity_proxies.csv"
-	heatmap_output_path = code_dir / "proxy_correlation_heatmap.png"
+	heatmap_output_path = plots_dir / "proxy_correlation_heatmap.png"
 	index_output_path = code_dir / "market_liquidity_index.csv"
-	index_plot_output_path = code_dir / "market_liquidity_index_plot.png"
-	index_plot_30d_output_path = code_dir / "market_liquidity_index_30d_plot.png"
+	index_plot_output_path = plots_dir / "market_liquidity_index_plot.png"
 	weights_output_path = code_dir / "proxy_pca_weights.csv"
 
 	if not input_path.exists():
@@ -389,13 +364,13 @@ def main() -> None:
 	market_index_df[["DATE", "Market_Liquidity_Index"]].to_csv(index_output_path, index=False)
 	proxy_weights_df.to_csv(weights_output_path, index=False)
 	plot_market_liquidity_index(market_index_df, index_plot_output_path)
-	plot_market_liquidity_index_rolling(market_index_df, index_plot_30d_output_path)
 
 	_ = analysis
 	for stale_file in [
 		code_dir / "proxy_correlation_matrix.csv",
 		code_dir / "high_correlation_pairs.csv",
 		code_dir / "yearly_proxy_correlations.csv",
+		plots_dir / "market_liquidity_index_30d_plot.png",
 	]:
 		if stale_file.exists():
 			stale_file.unlink()
@@ -404,7 +379,6 @@ def main() -> None:
 	print(f"Saved market liquidity index CSV: {index_output_path}")
 	print(f"Saved PCA proxy weights CSV: {weights_output_path}")
 	print(f"Saved market liquidity index plot: {index_plot_output_path}")
-	print(f"Saved 30-day rolling index plot: {index_plot_30d_output_path}")
 
 
 if __name__ == "__main__":
