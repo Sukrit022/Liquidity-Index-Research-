@@ -1,0 +1,52 @@
+{
+  "source_file": "C:\\Users\\amrit\\liquidity-research\\Liquidity-Index-Research-\\Code\\market_liquidity_index.csv",
+  "target_column": "Market_Liquidity_Index",
+  "row_count_raw": 3365,
+  "row_count_model_ready": 3335,
+  "rows_dropped_for_feature_warmup": 30,
+  "feature_count": 17,
+  "train_size": 2668,
+  "test_size": 667,
+  "train_ratio": 0.8,
+  "test_ratio": 0.2,
+  "train_start": "2011-07-13",
+  "train_end": "2022-04-25",
+  "test_start": "2022-04-26",
+  "test_end": "2024-12-31",
+  "split_timestamp": "2022-04-26",
+  "lag_windows": [
+    1,
+    2,
+    3,
+    5,
+    7,
+    14,
+    21,
+    30
+  ],
+  "rolling_windows": [
+    7,
+    14,
+    30
+  ],
+  "date_features": [
+    "day_of_week",
+    "month",
+    "quarter"
+  ],
+  "outlier_method": "IQR clipping",
+  "outlier_stats": {
+    "q1": -0.5433450874107252,
+    "q3": 0.8130275622933947,
+    "iqr": 1.3563726497041197,
+    "lower_bound": -2.5779040619669047,
+    "upper_bound": 2.8475865368495743,
+    "outliers_capped": 17
+  },
+  "missing_value_strategy": "forward-fill then backfill",
+  "split_strategy": "chronological 80/20 without shuffle",
+  "scalers": {
+    "ml": "StandardScaler on features and target fitted on train split only",
+    "dl": "MinMaxScaler on features and target fitted on train split only"
+  }
+}

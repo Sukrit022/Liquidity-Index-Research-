@@ -1,0 +1,42 @@
+{
+  "data_source": "C:\\Users\\amrit\\liquidity-research\\Liquidity-Index-Research-\\artifacts\\preprocessed_arrays.joblib",
+  "split_info_source": "C:\\Users\\amrit\\liquidity-research\\Liquidity-Index-Research-\\artifacts\\split_info.json",
+  "train_start": "2011-07-13",
+  "train_end": "2022-04-25",
+  "test_start": "2022-04-26",
+  "test_end": "2024-12-31",
+  "moving_average_window": 7,
+  "ets": {
+    "model_type": "SimpleExpSmoothing",
+    "smoothing_level": 0.3723988364716865,
+    "initial_level": -1.4242532530282166,
+    "fitted_level_last": 0.882573936271566
+  },
+  "arima": {
+    "selection_method": "pmdarima.auto_arima",
+    "order": [
+      1,
+      1,
+      1
+    ],
+    "trend": "n",
+    "aic": -1356.1671246699098
+  },
+  "sarima": {
+    "selection_method": "pmdarima.auto_arima",
+    "order": [
+      1,
+      1,
+      1
+    ],
+    "seasonal_order": [
+      0,
+      0,
+      0,
+      21
+    ],
+    "trend": "n",
+    "aic": -1356.1671246699098,
+    "seasonal_period": 21
+  }
+}

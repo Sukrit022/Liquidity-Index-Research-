@@ -1,0 +1,2 @@
+order,trend,aic,selection_method,status
+"(1, 1, 1)",n,-1356.1671246699098,pmdarima.auto_arima,selected
